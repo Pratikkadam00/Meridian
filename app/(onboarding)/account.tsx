@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 import { z } from "zod";
 
@@ -16,29 +17,37 @@ import { ProgressDots } from "@/shared/ui/ProgressDots";
 import { Screen } from "@/shared/ui/Screen";
 import { Text } from "@/shared/ui/Text";
 
-const signInSchema = z.object({
-  email: z.string().email("Enter a valid email."),
-  password: z.string().min(6, "Use at least 6 characters."),
-  fullName: z.string().optional(),
-  orgName: z.string().optional(),
-});
+type Translate = (key: string, options?: Record<string, unknown>) => string;
 
-const signUpSchema = signInSchema.extend({
-  fullName: z.string().min(2, "Enter your full name."),
-  orgName: z.string().min(2, "Enter your workspace name."),
-});
+const createSignInSchema = (t: Translate) =>
+  z.object({
+    email: z.string().email(t("account.errorEmail")),
+    password: z.string().min(6, t("account.errorPassword")),
+    fullName: z.string().optional(),
+    orgName: z.string().optional(),
+  });
 
-type AccountFormValues = z.infer<typeof signInSchema>;
+const createSignUpSchema = (t: Translate) =>
+  createSignInSchema(t).extend({
+    fullName: z.string().min(2, t("account.errorFullName")),
+    orgName: z.string().min(2, t("account.errorOrgName")),
+  });
+
+type AccountFormValues = z.infer<ReturnType<typeof createSignInSchema>>;
 
 export default function AccountScreen() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const isSignIn = params.mode === "sign-in";
   const { isConfigured, isLoading, signIn, signUp } = useAuth();
   const { isRTL } = useI18nControls();
+  const { t } = useTranslation();
   const [formMessage, setFormMessage] = useState<string | null>(null);
   useOnboardingStepTracking("account", 2);
 
-  const schema = useMemo(() => (isSignIn ? signInSchema : signUpSchema), [isSignIn]);
+  const schema = useMemo(
+    () => (isSignIn ? createSignInSchema(t) : createSignUpSchema(t)),
+    [isSignIn, t],
+  );
   const {
     control,
     handleSubmit,
@@ -80,14 +89,14 @@ export default function AccountScreen() {
       });
 
       if (result.needsEmailConfirmation) {
-        setFormMessage("Check your email to confirm the account, then sign in.");
+        setFormMessage(t("account.checkEmailConfirm"));
         return;
       }
 
       await persistOnboardingStep("personalization");
       router.replace("/personalization");
     } catch (error) {
-      setFormMessage(error instanceof Error ? error.message : "Authentication failed.");
+      setFormMessage(error instanceof Error ? error.message : t("account.authFailed"));
     }
   });
 
@@ -95,15 +104,15 @@ export default function AccountScreen() {
     <Screen contentStyle={[styles.screen, isRTL && styles.rtl]}>
       <OnboardingStepView>
         <ProgressDots count={5} activeIndex={1} />
-        <Text variant="eyebrow">Step 2</Text>
+        <Text variant="eyebrow">{t("account.step")}</Text>
         <Text variant="h1" style={styles.title}>
-          {isSignIn ? "Sign in" : "Create your workspace"}
+          {isSignIn ? t("account.titleSignIn") : t("account.titleSignUp")}
         </Text>
 
         {!isConfigured ? (
           <View style={styles.notice}>
             <Text variant="caption" muted>
-              Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to enable auth.
+              {t("account.supabaseNotice")}
             </Text>
           </View>
         ) : null}
@@ -114,8 +123,8 @@ export default function AccountScreen() {
             name="fullName"
             render={({ field: { onBlur, onChange, value } }) => (
               <Input
-                label="Full name"
-                placeholder="Your name"
+                label={t("account.fullNameLabel")}
+                placeholder={t("account.fullNamePlaceholder")}
                 autoCapitalize="words"
                 autoComplete="name"
                 value={value}
@@ -133,8 +142,8 @@ export default function AccountScreen() {
             name="orgName"
             render={({ field: { onBlur, onChange, value } }) => (
               <Input
-                label="Workspace"
-                placeholder="Brokerage or personal workspace"
+                label={t("account.workspaceLabel")}
+                placeholder={t("account.workspacePlaceholder")}
                 autoCapitalize="words"
                 value={value}
                 onBlur={onBlur}
@@ -150,8 +159,8 @@ export default function AccountScreen() {
           name="email"
           render={({ field: { onBlur, onChange, value } }) => (
             <Input
-              label="Work email"
-              placeholder="you@brokerage.ae"
+              label={t("account.emailLabel")}
+              placeholder={t("account.emailPlaceholder")}
               autoCapitalize="none"
               autoComplete="email"
               keyboardType="email-address"
@@ -167,8 +176,8 @@ export default function AccountScreen() {
           name="password"
           render={({ field: { onBlur, onChange, value } }) => (
             <Input
-              label="Password"
-              placeholder="Minimum 6 characters"
+              label={t("account.passwordLabel")}
+              placeholder={t("account.passwordPlaceholder")}
               autoCapitalize="none"
               secureTextEntry
               value={value}
@@ -186,7 +195,7 @@ export default function AccountScreen() {
         ) : null}
 
         <GoldButton
-          label={isSignIn ? "Sign in" : "Continue"}
+          label={isSignIn ? t("account.submitSignIn") : t("account.submitSignUp")}
           disabled={!isConfigured || isSubmitting || isLoading}
           onPress={submit}
           style={(!isConfigured || isSubmitting || isLoading) && styles.disabled}
@@ -194,22 +203,22 @@ export default function AccountScreen() {
 
         <Link href={{ pathname: "/account", params: { mode: isSignIn ? "sign-up" : "sign-in" } }} asChild>
           <PressableScale
-            accessibilityLabel={isSignIn ? "Create a workspace" : "Sign in"}
+            accessibilityLabel={isSignIn ? t("account.switchToSignUpA11y") : t("account.switchToSignInA11y")}
             focusRadius={tokens.radius.field}
             pressScale={tokens.control.button.pressScale}
             pressableStyle={styles.switchMode}
           >
             <Text variant="caption" muted>
-              {isSignIn ? "Need a workspace? " : "Already have an account? "}
+              {isSignIn ? t("account.switchPromptSignUp") : t("account.switchPromptSignIn")}
               <Text variant="caption" style={styles.switchModeAccent}>
-                {isSignIn ? "Create one" : "Sign in"}
+                {isSignIn ? t("account.switchActionSignUp") : t("account.switchActionSignIn")}
               </Text>
             </Text>
           </PressableScale>
         </Link>
 
         <Link href="/welcome" asChild>
-          <GhostButton label="Back" />
+          <GhostButton label={t("account.back")} />
         </Link>
       </OnboardingStepView>
     </Screen>

@@ -3,6 +3,7 @@ import { Link } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { MotiView } from "moti";
 import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
@@ -26,6 +27,7 @@ type DealDeckProps = {
 const SWIPE_ADVANCE_THRESHOLD = 90;
 
 export function DealDeck({ deals, activeIndex, isLoading, isRTL, onActiveIndexChange, onDealPress }: DealDeckProps) {
+  const { t } = useTranslation();
   const translateX = useSharedValue(0);
   const reducedMotion = useReducedMotion();
   const activeDeal = deals[activeIndex];
@@ -87,7 +89,7 @@ export function DealDeck({ deals, activeIndex, isLoading, isRTL, onActiveIndexCh
       <View style={styles.deckSlot}>
         <View style={styles.loadingCard}>
           <Text variant="mono" muted>
-            Loading portfolio
+            {t("home.loadingPortfolio")}
           </Text>
         </View>
       </View>
@@ -98,15 +100,15 @@ export function DealDeck({ deals, activeIndex, isLoading, isRTL, onActiveIndexCh
     return (
       <View style={styles.deckSlot}>
         <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360 }} style={styles.emptyCard}>
-          <Text variant="eyebrow">First deal</Text>
+          <Text variant="eyebrow">{t("home.firstDealEyebrow")}</Text>
           <Text variant="h1" style={styles.emptyTitle}>
-            Add your first deal
+            {t("home.addFirstDeal")}
           </Text>
           <Text variant="body" muted style={styles.emptyBody}>
-            Start with a project, buyer, and payment plan. The deck will show what is due next as soon as the deal is saved.
+            {t("home.firstDealBody")}
           </Text>
           <Link href="/new-deal" asChild>
-            <GoldButton label="Add your first deal" />
+            <GoldButton label={t("home.addFirstDeal")} />
           </Link>
         </MotiView>
       </View>
@@ -134,6 +136,8 @@ function DeckShadowCard({ offset }: { offset: "near" | "far" }) {
 }
 
 function DealCard({ deal, isRTL }: { deal: DashboardDeal; isRTL: boolean }) {
+  const { t } = useTranslation();
+
   return (
     <LinearGradient
       colors={[tokens.colors.deck, tokens.colors.deckEnd]}
@@ -152,7 +156,7 @@ function DealCard({ deal, isRTL }: { deal: DashboardDeal; isRTL: boolean }) {
       </Text>
       <View style={styles.cardSpacer} />
       <Text variant="caption" muted>
-        Next - <Text variant="caption">{deal.nextMilestoneLabel}</Text> - {deal.nextMilestoneDate}
+        {t("home.next")} - <Text variant="caption">{deal.nextMilestoneLabel}</Text> - {deal.nextMilestoneDate}
       </Text>
       <Text variant="amount">{formatAedCompact(deal.totalValueAed)}</Text>
       <View style={styles.progressTrack}>
@@ -160,7 +164,7 @@ function DealCard({ deal, isRTL }: { deal: DashboardDeal; isRTL: boolean }) {
       </View>
       <View style={styles.cardFooter}>
         <Text variant="mono" muted>
-          {deal.paidPercent}% paid
+          {deal.paidPercent}% {t("home.paid")}
         </Text>
         <View style={[styles.chip, deal.status === "ok" && styles.chipOk, deal.status === "over" && styles.chipOver]}>
           <View style={[styles.chipDot, deal.status === "ok" && styles.chipDotOk, deal.status === "over" && styles.chipDotOver]} />

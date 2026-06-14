@@ -1,6 +1,7 @@
 import { Building2, UserRound } from "lucide-react-native";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/features/auth";
@@ -18,6 +19,7 @@ const developers = ["Emaar", "Damac", "Sobha", "Binghatti", "Nakheel", "Meraas"]
 const volumes = ["1-5", "6-15", "16+"] as const;
 
 export default function PersonalizationScreen() {
+  const { t } = useTranslation();
   const { onboarding } = useRepositories();
   const { refreshProfile } = useAuth();
   const [role, setRole] = useState<BrokerRole>("solo_broker");
@@ -63,7 +65,7 @@ export default function PersonalizationScreen() {
       await persistOnboardingStep("permissions");
       router.push("/permissions");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not save your preferences.");
+      setMessage(error instanceof Error ? error.message : t("personalization.saveError"));
     } finally {
       setIsSaving(false);
     }
@@ -74,25 +76,25 @@ export default function PersonalizationScreen() {
       <OnboardingStepView>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <ProgressDots count={5} activeIndex={2} />
-          <Text variant="eyebrow">Step 3</Text>
+          <Text variant="eyebrow">{t("personalization.eyebrow")}</Text>
           <Text variant="h1" style={styles.title}>
-            Tell us about your work
+            {t("personalization.title")}
           </Text>
 
           <Text variant="caption" muted style={styles.sectionLabel}>
-            Your role
+            {t("personalization.roleLabel")}
           </Text>
-          <OptionCard title="Solo broker" subtitle="Just me, my own deals" icon={UserRound} selected={role === "solo_broker"} onPress={() => setRole("solo_broker")} />
+          <OptionCard title={t("personalization.soloBrokerTitle")} subtitle={t("personalization.soloBrokerSubtitle")} icon={UserRound} selected={role === "solo_broker"} onPress={() => setRole("solo_broker")} />
           <OptionCard
-            title="Part of a brokerage"
-            subtitle="A team of agents"
+            title={t("personalization.brokerageTitle")}
+            subtitle={t("personalization.brokerageSubtitle")}
             icon={Building2}
             selected={role === "brokerage"}
             onPress={() => setRole("brokerage")}
           />
 
           <Text variant="caption" muted style={styles.sectionLabel}>
-            Developers you work with
+            {t("personalization.developersLabel")}
           </Text>
           <View style={styles.chips}>
             {developers.map((developer) => (
@@ -101,7 +103,7 @@ export default function PersonalizationScreen() {
           </View>
 
           <Text variant="caption" muted style={styles.sectionLabel}>
-            Deals you run at a time
+            {t("personalization.volumeLabel")}
           </Text>
           <SegmentControl options={volumes} value={volume} onChange={setVolume} />
 
@@ -112,8 +114,8 @@ export default function PersonalizationScreen() {
           ) : null}
 
           <View style={styles.actions}>
-            <GoldButton label={isSaving ? "Saving" : "Continue"} disabled={isSaving} onPress={handleContinue} style={isSaving && styles.disabled} />
-            <GhostButton label="Back" onPress={() => router.back()} />
+            <GoldButton label={isSaving ? t("personalization.saving") : t("personalization.continue")} disabled={isSaving} onPress={handleContinue} style={isSaving && styles.disabled} />
+            <GhostButton label={t("personalization.back")} onPress={() => router.back()} />
           </View>
         </ScrollView>
       </OnboardingStepView>

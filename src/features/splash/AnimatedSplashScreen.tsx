@@ -1,6 +1,7 @@
 import { Canvas, Path, Skia } from "@shopify/react-native-skia";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
@@ -24,6 +25,7 @@ const markPath = Skia.PathBuilder.Make()
   .detach();
 
 export function AnimatedSplashScreen() {
+  const { t } = useTranslation();
   const reveal = useSharedValue(0);
   const brand = useSharedValue(0);
   const reducedMotion = useReducedMotion();
@@ -71,7 +73,7 @@ export function AnimatedSplashScreen() {
             Meridian
           </Text>
           <Text variant="mono" muted style={styles.brandMeta}>
-            off-plan command center
+            {t("splash.tagline")}
           </Text>
         </Animated.View>
       </View>

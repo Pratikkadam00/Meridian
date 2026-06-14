@@ -1,5 +1,6 @@
 import { LockKeyhole } from "lucide-react-native";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
+import { useTranslation } from "react-i18next";
 import { Platform, StyleSheet, View } from "react-native";
 
 import { tokens } from "@/shared/theme/tokens";
@@ -17,6 +18,7 @@ type LockState = "checking" | "locked" | "unlocked";
  * out; only an explicit failed/cancelled prompt holds at the lock screen.
  */
 export function AppLockGate({ children }: PropsWithChildren) {
+  const { t } = useTranslation();
   const [state, setState] = useState<LockState>(Platform.OS === "web" ? "unlocked" : "checking");
 
   const attempt = useCallback(async () => {
@@ -57,12 +59,12 @@ export function AppLockGate({ children }: PropsWithChildren) {
         <LockKeyhole size={34} color={tokens.colors.goldBright} strokeWidth={2} />
       </View>
       <Text variant="h1" style={styles.title}>
-        Meridian is locked
+        {t("lock.title")}
       </Text>
       <Text variant="body" muted style={styles.body}>
-        Unlock with Face ID or your device biometrics to continue.
+        {t("lock.body")}
       </Text>
-      <GoldButton label="Unlock" onPress={() => void attempt()} />
+      <GoldButton label={t("lock.unlock")} onPress={() => void attempt()} />
     </Screen>
   );
 }

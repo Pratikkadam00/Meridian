@@ -2,6 +2,7 @@ import * as LocalAuthentication from "expo-local-authentication";
 import { router } from "expo-router";
 import { Bell, Fingerprint, Languages, LogOut } from "lucide-react-native";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -17,6 +18,7 @@ import { Surface } from "@/shared/ui/Surface";
 import { Text } from "@/shared/ui/Text";
 
 export function SettingsScreen() {
+  const { t } = useTranslation();
   const { profile, signOut } = useAuth();
   const { reminders } = useRepositories();
   const { language, setLanguage } = useI18nControls();
@@ -46,7 +48,7 @@ export function SettingsScreen() {
       setPushMessage(message);
     } catch (error) {
       captureNonFatalError("settings_push_register_failed", error, { surface: "settings" });
-      setPushMessage(error instanceof Error ? error.message : "Could not enable push reminders.");
+      setPushMessage(error instanceof Error ? error.message : t("settings.pushError"));
     } finally {
       setBusy(null);
     }
@@ -58,30 +60,30 @@ export function SettingsScreen() {
     try {
       if (lockEnabled) {
         // Re-authenticate before turning the lock off, so a passer-by can't.
-        const ok = await authenticateAppLock("Confirm to turn off app lock");
+        const ok = await authenticateAppLock(t("settings.lockConfirmTurnOff"));
         if (!ok) {
           return;
         }
         await setBiometricLockEnabled(false);
         setLockEnabled(false);
-        setLockMessage("App lock turned off.");
+        setLockMessage(t("settings.lockTurnedOff"));
         return;
       }
 
       if (!(await hasBiometricHardware())) {
-        setLockMessage("Set up Face ID or device biometrics first, then enable app lock here.");
+        setLockMessage(t("settings.lockNoHardware"));
         return;
       }
 
-      const result = await LocalAuthentication.authenticateAsync({ promptMessage: "Enable Meridian app lock", cancelLabel: "Not now" });
+      const result = await LocalAuthentication.authenticateAsync({ promptMessage: t("settings.lockEnablePrompt"), cancelLabel: t("settings.lockCancelLabel") });
       if (result.success) {
         await setBiometricLockEnabled(true);
         setLockEnabled(true);
-        setLockMessage("Biometric app lock is on.");
+        setLockMessage(t("settings.lockTurnedOn"));
       }
     } catch (error) {
       captureNonFatalError("settings_app_lock_failed", error, { surface: "settings" });
-      setLockMessage("Could not change the app lock. Try again later.");
+      setLockMessage(t("settings.lockError"));
     } finally {
       setBusy(null);
     }
@@ -102,17 +104,17 @@ export function SettingsScreen() {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <Text variant="eyebrow">Your workspace</Text>
+        <Text variant="eyebrow">{t("settings.eyebrow")}</Text>
         <Text variant="h1" style={styles.title}>
-          Settings
+          {t("settings.title")}
         </Text>
 
         <Surface style={styles.card}>
           <Text variant="caption" muted>
-            Signed in as
+            {t("settings.signedInAs")}
           </Text>
           <Text variant="cardTitle" style={styles.cardValue}>
-            {profile?.full_name ?? "Preview broker"}
+            {profile?.full_name ?? t("settings.previewBroker")}
           </Text>
           {profile?.email ? (
             <Text variant="caption" muted>
@@ -121,7 +123,7 @@ export function SettingsScreen() {
           ) : null}
           {profile?.role ? (
             <Text variant="caption" muted style={styles.role}>
-              {profile.role === "solo" ? "Solo broker" : "Brokerage team"}
+              {profile.role === "solo" ? t("settings.roleSolo") : t("settings.roleTeam")}
             </Text>
           ) : null}
         </Surface>
@@ -130,13 +132,13 @@ export function SettingsScreen() {
           <View style={styles.rowHeader}>
             <Bell size={18} color={tokens.colors.accent} strokeWidth={2.1} />
             <Text variant="cardTitle" style={styles.rowTitle}>
-              Notifications
+              {t("settings.notificationsTitle")}
             </Text>
           </View>
           <Text variant="caption" muted style={styles.rowBody}>
-            Get a push reminder before every milestone is due.
+            {t("settings.notificationsBody")}
           </Text>
-          <GhostButton label={busy === "push" ? "Connecting" : "Enable push reminders"} disabled={busy !== null} onPress={handleEnablePush} />
+          <GhostButton label={busy === "push" ? t("settings.pushConnecting") : t("settings.pushEnable")} disabled={busy !== null} onPress={handleEnablePush} />
           {pushMessage ? (
             <Text variant="caption" muted style={styles.message}>
               {pushMessage}
@@ -148,13 +150,13 @@ export function SettingsScreen() {
           <View style={styles.rowHeader}>
             <Fingerprint size={18} color={tokens.colors.accent} strokeWidth={2.1} />
             <Text variant="cardTitle" style={styles.rowTitle}>
-              App lock
+              {t("settings.lockTitle")}
             </Text>
           </View>
           <Text variant="caption" muted style={styles.rowBody}>
-            Require Face ID / biometrics each time Meridian opens.
+            {t("settings.lockBody")}
           </Text>
-          <GhostButton label={busy === "lock" ? "Please wait" : lockEnabled ? "Turn off app lock" : "Enable app lock"} disabled={busy !== null} onPress={handleToggleLock} />
+          <GhostButton label={busy === "lock" ? t("settings.lockPleaseWait") : lockEnabled ? t("settings.lockTurnOff") : t("settings.lockEnable")} disabled={busy !== null} onPress={handleToggleLock} />
           {lockMessage ? (
             <Text variant="caption" muted style={styles.message}>
               {lockMessage}
@@ -166,15 +168,15 @@ export function SettingsScreen() {
           <View style={styles.rowHeader}>
             <Languages size={18} color={tokens.colors.accent} strokeWidth={2.1} />
             <Text variant="cardTitle" style={styles.rowTitle}>
-              Language
+              {t("settings.languageTitle")}
             </Text>
           </View>
           <Text variant="caption" muted style={styles.rowBody}>
-            Switching to Arabic mirrors the app right-to-left (the app reloads).
+            {t("settings.languageBody")}
           </Text>
           <View style={styles.languageRow}>
-            <GhostButton label="English" disabled={busy !== null || language === "en"} onPress={() => setLanguage("en")} style={styles.languageButton} />
-            <GhostButton label="العربية" disabled={busy !== null || language === "ar"} onPress={() => setLanguage("ar")} style={styles.languageButton} />
+            <GhostButton label={t("settings.languageEnglish")} disabled={busy !== null || language === "en"} onPress={() => setLanguage("en")} style={styles.languageButton} />
+            <GhostButton label={t("settings.languageArabic")} disabled={busy !== null || language === "ar"} onPress={() => setLanguage("ar")} style={styles.languageButton} />
           </View>
         </Surface>
 
@@ -182,10 +184,10 @@ export function SettingsScreen() {
           <View style={styles.signOutRow}>
             <LogOut size={18} color={tokens.colors.over} strokeWidth={2.1} />
             <Text variant="caption" muted style={styles.rowTitle}>
-              Sign out of this device
+              {t("settings.signOutRowLabel")}
             </Text>
           </View>
-          <GoldButton label={busy === "signout" ? "Signing out" : "Sign out"} disabled={busy !== null} onPress={handleSignOut} />
+          <GoldButton label={busy === "signout" ? t("settings.signingOut") : t("settings.signOut")} disabled={busy !== null} onPress={handleSignOut} />
         </View>
       </ScrollView>
     </Screen>

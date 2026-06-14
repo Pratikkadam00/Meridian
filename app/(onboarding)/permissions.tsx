@@ -3,6 +3,7 @@ import * as LocalAuthentication from "expo-local-authentication";
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Platform, StyleSheet, View } from "react-native";
 
 import { OnboardingStepView, persistOnboardingStep, useOnboardingStepTracking } from "@/features/onboarding";
@@ -16,6 +17,7 @@ import { Screen } from "@/shared/ui/Screen";
 import { Text } from "@/shared/ui/Text";
 
 export default function PermissionsScreen() {
+  const { t } = useTranslation();
   const [message, setMessage] = useState<string | null>(null);
   const [isRequesting, setIsRequesting] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -45,7 +47,7 @@ export default function PermissionsScreen() {
       const finalStatus = current.granted ? current : await Notifications.requestPermissionsAsync();
       await continueToEducation(finalStatus.granted ? "granted" : finalStatus.status);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Notifications are unavailable on this device.");
+      setMessage(error instanceof Error ? error.message : t("permissions.notificationsUnavailable"));
     } finally {
       setIsRequesting(false);
     }
@@ -55,29 +57,29 @@ export default function PermissionsScreen() {
     setMessage(null);
 
     if (Platform.OS === "web") {
-      setMessage("Biometric lock is available on iOS and Android devices.");
+      setMessage(t("permissions.biometricWebUnavailable"));
       return;
     }
 
     try {
       if (!(await hasBiometricHardware())) {
-        setMessage("Set up Face ID or device biometrics first, then enable app lock in Settings.");
+        setMessage(t("permissions.biometricSetupFirst"));
         return;
       }
 
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Enable Meridian app lock",
-        cancelLabel: "Not now",
+        promptMessage: t("permissions.biometricPrompt"),
+        cancelLabel: t("permissions.biometricCancel"),
       });
 
       if (result.success) {
         await setBiometricLockEnabled(true);
         setBiometricEnabled(true);
-        setMessage("Biometric app lock is ready.");
+        setMessage(t("permissions.biometricReady"));
       }
     } catch (error) {
       captureNonFatalError("biometric_enroll_failed", error, { surface: "permissions" });
-      setMessage("Could not enable biometric lock. You can set it up later in Settings.");
+      setMessage(t("permissions.biometricEnableFailed"));
     }
   }
 
@@ -90,18 +92,18 @@ export default function PermissionsScreen() {
             <Bell size={38} color={tokens.colors.goldBright} strokeWidth={2} />
           </View>
           <Text variant="h1" style={styles.title}>
-            Never miss a payment
+            {t("permissions.title")}
           </Text>
           <Text variant="body" muted style={styles.lede}>
-            {"We'll remind you before every milestone is due, so an Oqood deadline or a handover never slips. Notifications only when it matters."}
+            {t("permissions.lede")}
           </Text>
 
           <View style={styles.lockPanel}>
             <LockKeyhole size={18} color={tokens.colors.accent} strokeWidth={2.1} />
             <Text variant="caption" muted style={styles.lockCopy}>
-              You can also lock the app with Face ID.
+              {t("permissions.lockCopy")}
             </Text>
-            <GhostButton label={biometricEnabled ? "App lock enabled" : "Enable app lock"} onPress={handleBiometricLock} />
+            <GhostButton label={biometricEnabled ? t("permissions.appLockEnabled") : t("permissions.enableAppLock")} onPress={handleBiometricLock} />
           </View>
 
           {message ? (
@@ -113,13 +115,13 @@ export default function PermissionsScreen() {
 
         <View style={styles.actions}>
           <GoldButton
-            label={isRequesting ? "Requesting" : "Enable reminders"}
+            label={isRequesting ? t("permissions.requesting") : t("permissions.enableReminders")}
             disabled={isRequesting}
             onPress={handleEnableReminders}
             style={isRequesting && styles.disabled}
           />
-          <GhostButton label="Maybe later" onPress={() => void continueToEducation("skipped")} />
-          <GhostButton label="Back" onPress={() => router.back()} />
+          <GhostButton label={t("permissions.maybeLater")} onPress={() => void continueToEducation("skipped")} />
+          <GhostButton label={t("permissions.back")} onPress={() => router.back()} />
         </View>
       </OnboardingStepView>
     </Screen>

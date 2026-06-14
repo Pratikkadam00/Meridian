@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { Check, ChevronLeft, ChevronRight, Circle } from "lucide-react-native";
 import { MotiView } from "moti";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 
@@ -24,6 +25,7 @@ type DealDetailScreenProps = {
 const detailQueryKey = (dealId: string) => ["deal-detail", dealId] as const;
 
 export function DealDetailScreen({ dealId }: DealDetailScreenProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { isRTL } = useI18nControls();
@@ -82,7 +84,7 @@ export function DealDetailScreen({ dealId }: DealDetailScreenProps) {
       <Screen contentStyle={styles.screen}>
         <View style={styles.centerState}>
           <Text variant="mono" muted>
-            Loading deal
+            {t("deal.loadingDeal")}
           </Text>
         </View>
       </Screen>
@@ -94,12 +96,12 @@ export function DealDetailScreen({ dealId }: DealDetailScreenProps) {
       <Screen contentStyle={styles.screen}>
         <View style={styles.centerState}>
           <Text variant="h1" style={styles.emptyTitle}>
-            Deal unavailable
+            {t("deal.unavailableTitle")}
           </Text>
           <Text variant="body" muted style={styles.emptyBody}>
-            {detailQuery.error instanceof Error ? detailQuery.error.message : "This deal could not be loaded."}
+            {detailQuery.error instanceof Error ? detailQuery.error.message : t("deal.unavailableBody")}
           </Text>
-          <GhostButton label="Back to portfolio" onPress={goBack} />
+          <GhostButton label={t("deal.backToPortfolio")} onPress={goBack} />
         </View>
       </Screen>
     );
@@ -112,8 +114,8 @@ export function DealDetailScreen({ dealId }: DealDetailScreenProps) {
           <Button
             variant="text"
             size="md"
-            label="Portfolio"
-            accessibilityLabel="Back to portfolio"
+            label={t("deal.portfolio")}
+            accessibilityLabel={t("deal.backToPortfolio")}
             onPress={goBack}
             leftIcon={isRTL ? <ChevronRight size={18} color={tokens.colors.accent} /> : <ChevronLeft size={18} color={tokens.colors.accent} />}
             style={styles.backButton}
@@ -124,13 +126,13 @@ export function DealDetailScreen({ dealId }: DealDetailScreenProps) {
           <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360, delay: 80 }}>
             <View style={styles.heroBlock}>
               <Text variant="eyebrow">
-                {deal.developer} - {deal.locationLabel}
+                {t("deal.developerLocation", { developer: deal.developer, location: deal.locationLabel })}
               </Text>
               <Text variant="h1" style={styles.title}>
                 {deal.projectName}
               </Text>
               <Text variant="body" muted style={styles.metaLine}>
-                Buyer: {deal.buyerName} - Handover {deal.handoverLabel}
+                {t("deal.buyerHandover", { buyer: deal.buyerName, handover: deal.handoverLabel })}
               </Text>
             </View>
           </MotiView>
@@ -149,7 +151,7 @@ export function DealDetailScreen({ dealId }: DealDetailScreenProps) {
         <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360, delay: 240 }}>
           <View style={styles.towerPanel}>
             <Text variant="cardTitle" style={styles.towerTitle}>
-              Payment plan
+              {t("deal.paymentPlan")}
             </Text>
             {deal.milestones.map((milestone, index) => (
               <PaymentMilestoneRow
@@ -170,6 +172,7 @@ export function DealDetailScreen({ dealId }: DealDetailScreenProps) {
 }
 
 function PaidToDatePanel({ deal }: { deal: DealDetail }) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const progress = useSharedValue(0);
 
@@ -184,7 +187,7 @@ function PaidToDatePanel({ deal }: { deal: DealDetail }) {
   return (
     <View style={styles.paidPanel}>
       <Text variant="caption" muted style={styles.panelLabel}>
-        Paid to date
+        {t("deal.paidToDate")}
       </Text>
       <Text variant="cardTitle" style={styles.paidAmount}>
         {formatAedCompact(deal.paidToDateAed)} <Text variant="caption" muted>/ {formatAedCompact(deal.totalValueAed).replace("AED ", "")}</Text>
@@ -206,6 +209,7 @@ type PaymentMilestoneRowProps = {
 };
 
 function PaymentMilestoneRow({ milestone, isLast, isPopping, isPending, canMarkPaid, onMarkPaid }: PaymentMilestoneRowProps) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const nodeScale = useSharedValue(1);
 
@@ -237,7 +241,7 @@ function PaymentMilestoneRow({ milestone, isLast, isPopping, isPending, canMarkP
         {isDone ? <Check size={11} color={tokens.colors.goldInk} strokeWidth={3} /> : isNow ? <Circle size={7} color={tokens.colors.due} fill={tokens.colors.due} strokeWidth={0} /> : null}
       </Animated.View>
       <Text variant="cardTitle" style={styles.milestonePercent}>
-        {milestone.percent}% - {milestone.triggerLabel}
+        {t("deal.milestonePercent", { percent: milestone.percent, trigger: milestone.triggerLabel })}
       </Text>
       <Text variant="caption" style={styles.milestoneLabel}>
         {milestone.label}
@@ -248,7 +252,7 @@ function PaymentMilestoneRow({ milestone, isLast, isPopping, isPending, canMarkP
         </Text>
         {canMarkPaid ? (
           <PressableScale
-            accessibilityLabel={`Mark ${milestone.label} paid`}
+            accessibilityLabel={t("deal.markPaidAccessibility", { label: milestone.label })}
             disabled={isPending}
             haptic
             focusRadius={tokens.radius.pill}
@@ -257,12 +261,22 @@ function PaymentMilestoneRow({ milestone, isLast, isPopping, isPending, canMarkP
             onPress={() => onMarkPaid(milestone.id)}
           >
             <Text variant="mono" style={styles.markPaidText}>
-              {isPending ? "Saving" : `${milestone.status === "overdue" ? "Overdue" : `Due ${milestone.dueDateLabel}`} - Mark paid`}
+              {isPending
+                ? t("deal.saving")
+                : milestone.status === "overdue"
+                  ? t("deal.overdueMarkPaid")
+                  : t("deal.dueMarkPaid", { date: milestone.dueDateLabel })}
             </Text>
           </PressableScale>
         ) : (
           <Text variant="mono" style={[styles.milestoneStatus, isDone && styles.statusDone, milestone.status === "overdue" && styles.statusOver, milestone.status === "due" && styles.statusDue]}>
-            {isDone ? `Paid - ${milestone.paidDateLabel ?? "Done"}` : milestone.status === "overdue" ? `Overdue - ${milestone.dueDateLabel}` : milestone.status === "due" ? `Due ${milestone.dueDateLabel}` : milestone.dueDateLabel}
+            {isDone
+              ? t("deal.paidOn", { date: milestone.paidDateLabel ?? t("deal.done") })
+              : milestone.status === "overdue"
+                ? t("deal.overdueOn", { date: milestone.dueDateLabel })
+                : milestone.status === "due"
+                  ? t("deal.dueOn", { date: milestone.dueDateLabel })
+                  : milestone.dueDateLabel}
           </Text>
         )}
       </View>

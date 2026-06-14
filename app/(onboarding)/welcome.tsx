@@ -12,20 +12,7 @@ import { Screen } from "@/shared/ui/Screen";
 import { SegmentedControl } from "@/shared/ui/SelectableControls";
 import { Text } from "@/shared/ui/Text";
 
-const beats = [
-  {
-    title: "Track every milestone, booking to handover.",
-    body: "Drop the SPA, we read the payment plan. Reminders fire before every DLD deadline. Your whole portfolio, in one glance.",
-  },
-  {
-    title: "Drop the SPA, we read it.",
-    body: "Turn a payment plan into clean booking, DLD/Oqood, construction, and handover milestones before the deal slips.",
-  },
-  {
-    title: "Never miss a handover.",
-    body: "Get nudges before every payment is due and keep the week ahead visible while you move between clients.",
-  },
-];
+type Beat = { title: string; body: string };
 
 export default function WelcomeScreen() {
   const { t } = useTranslation();
@@ -34,6 +21,8 @@ export default function WelcomeScreen() {
   const carouselRef = useRef<ScrollView>(null);
   const [activeBeat, setActiveBeat] = useState(0);
   useOnboardingStepTracking("welcome", 1);
+
+  const beats = t("welcome.beats", { returnObjects: true }) as Beat[];
 
   const pageWidth = Math.max(width - tokens.spacing[22] * 2, 1);
 
@@ -79,7 +68,7 @@ export default function WelcomeScreen() {
             {beats.map((beat, index) => (
               <PressableScale
                 key={beat.title}
-                accessibilityLabel={`Show value ${index + 1}`}
+                accessibilityLabel={t("welcome.beatDotA11y", { index: index + 1 })}
                 selected={activeBeat === index}
                 focusRadius={tokens.radius.pill}
                 pressScale={tokens.control.optionChip.pressScale}
@@ -95,7 +84,7 @@ export default function WelcomeScreen() {
             labels={{ en: "English", ar: "العربية" }}
             value={language}
             onChange={setLanguage}
-            accessibilityLabel="Language"
+            accessibilityLabel={t("welcome.languageA11y")}
             style={styles.languageRow}
           />
           <Link href="/account" asChild>

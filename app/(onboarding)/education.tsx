@@ -1,6 +1,7 @@
 import { Bell, FileUp, Milestone } from "lucide-react-native";
 import { router } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/features/auth";
@@ -14,6 +15,7 @@ import { Screen } from "@/shared/ui/Screen";
 import { Text } from "@/shared/ui/Text";
 
 export default function EducationScreen() {
+  const { t } = useTranslation();
   const { onboarding } = useRepositories();
   const { refreshProfile } = useAuth();
   const [message, setMessage] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export default function EducationScreen() {
       trackAnalyticsEvent("onboarding_completed", { intent });
       router.replace("/home");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not finish onboarding.");
+      setMessage(error instanceof Error ? error.message : t("education.finishError"));
     } finally {
       setIsCompleting(false);
     }
@@ -42,19 +44,19 @@ export default function EducationScreen() {
       <OnboardingStepView>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <ProgressDots count={5} activeIndex={4} />
-          <Text variant="eyebrow">{"You're set"}</Text>
+          <Text variant="eyebrow">{t("education.eyebrow")}</Text>
           <Text variant="h1" style={styles.title}>
-            How Meridian works
+            {t("education.title")}
           </Text>
 
           <View style={styles.cards}>
-            <TeachCard icon={FileUp} title="Drop the SPA" body="Upload the agreement, we read the payment plan and fill it in. You confirm." />
+            <TeachCard icon={FileUp} title={t("education.spaTitle")} body={t("education.spaBody")} />
             <TeachCard
               icon={Milestone}
-              title="Track every milestone"
-              body="Booking, DLD/Oqood, construction stages, handover, paid, due, and overdue at a glance."
+              title={t("education.milestoneTitle")}
+              body={t("education.milestoneBody")}
             />
-            <TeachCard icon={Bell} title="Get reminded" body="A nudge before each payment, and a portfolio view of what is due this week." />
+            <TeachCard icon={Bell} title={t("education.reminderTitle")} body={t("education.reminderBody")} />
           </View>
 
           {message ? (
@@ -65,13 +67,13 @@ export default function EducationScreen() {
 
           <View style={styles.actions}>
             <GoldButton
-              label={isCompleting ? "Finishing" : "Add your first deal"}
+              label={isCompleting ? t("education.finishing") : t("education.addFirstDeal")}
               disabled={isCompleting}
               onPress={() => void finish("add_first_deal")}
               style={isCompleting && styles.disabled}
             />
-            <GhostButton label="Skip to dashboard" disabled={isCompleting} onPress={() => void finish("skip_dashboard")} />
-            <GhostButton label="Back" onPress={() => router.back()} />
+            <GhostButton label={t("education.skipToDashboard")} disabled={isCompleting} onPress={() => void finish("skip_dashboard")} />
+            <GhostButton label={t("education.back")} onPress={() => router.back()} />
           </View>
         </ScrollView>
       </OnboardingStepView>

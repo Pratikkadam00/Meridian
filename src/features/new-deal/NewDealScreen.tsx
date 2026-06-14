@@ -5,6 +5,7 @@ import { FileUp, Plus, Trash2 } from "lucide-react-native";
 import { MotiView } from "moti";
 import { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 import type { DealDetail, NewDealDocumentInput, SpaExtractionInput } from "@/shared/data/repositories/dealsRepository";
@@ -27,14 +28,15 @@ type PendingSpaDocument = NewDealDocumentInput & {
   dealId: string;
 };
 
-const triggerOptions: { label: string; value: MilestoneTrigger }[] = [
-  { label: "Booking", value: "booking" },
-  { label: "DLD", value: "registration" },
-  { label: "Build", value: "construction" },
-  { label: "Handover", value: "handover" },
+const triggerOptions: { labelKey: string; value: MilestoneTrigger }[] = [
+  { labelKey: "newDeal.triggerBooking", value: "booking" },
+  { labelKey: "newDeal.triggerDld", value: "registration" },
+  { labelKey: "newDeal.triggerBuild", value: "construction" },
+  { labelKey: "newDeal.triggerHandover", value: "handover" },
 ];
 
 export function NewDealScreen() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { deals: dealsRepository } = useRepositories();
   const aiSpaExtractionEnabled = useFeatureFlag("ai_spa_extraction");
@@ -90,11 +92,11 @@ export function NewDealScreen() {
         storagePath: result.storagePath,
       });
       replace(result.milestones.map(milestoneInputToForm));
-      setAiMessage(`AI filled ${result.milestones.length} milestones. Review the plan before saving.`);
+      setAiMessage(t("newDeal.aiFilledMilestones", { count: result.milestones.length }));
     },
     onError: (error) => {
       captureNonFatalError("spa_extraction_failed_but_app_continued", error, { surface: "new_deal" });
-      setAiMessage(error instanceof Error ? error.message : "SPA extraction failed. You can still enter the plan manually.");
+      setAiMessage(error instanceof Error ? error.message : t("newDeal.spaExtractionFailed"));
     },
   });
 
@@ -115,7 +117,7 @@ export function NewDealScreen() {
       const asset = result.assets[0];
 
       if (!asset?.uri) {
-        setAiMessage("Could not read the selected PDF. You can still enter the plan manually.");
+        setAiMessage(t("newDeal.couldNotReadPdf"));
         return;
       }
 
@@ -126,7 +128,7 @@ export function NewDealScreen() {
       });
     } catch (error) {
       captureNonFatalError("spa_document_picker_failed", error, { surface: "new_deal" });
-      setAiMessage("Could not open the file picker. You can still enter the plan manually.");
+      setAiMessage(t("newDeal.couldNotOpenPicker"));
     }
   }
 
@@ -146,16 +148,16 @@ export function NewDealScreen() {
     <Screen contentStyle={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360 }}>
-          <Button variant="text" size="md" label="Cancel" accessibilityLabel="Cancel new deal" onPress={() => router.back()} style={styles.cancel} />
+          <Button variant="text" size="md" label={t("newDeal.cancel")} accessibilityLabel={t("newDeal.cancelNewDeal")} onPress={() => router.back()} style={styles.cancel} />
           <Text variant="h1" style={styles.title}>
-            New deal
+            {t("newDeal.title")}
           </Text>
         </MotiView>
 
         {aiSpaExtractionEnabled ? (
           <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360, delay: 80 }}>
             <PressableScale
-              accessibilityLabel="Upload SPA PDF"
+              accessibilityLabel={t("newDeal.uploadSpaPdf")}
               disabled={isExtracting}
               haptic
               focusRadius={16 + tokens.control.focusRingOffset}
@@ -165,10 +167,10 @@ export function NewDealScreen() {
             >
               <FileUp size={24} color={tokens.colors.goldBright} strokeWidth={2.1} />
               <Text variant="cardTitle" style={styles.dropTitle}>
-                Drop the SPA PDF
+                {t("newDeal.dropSpaPdf")}
               </Text>
               <Text variant="caption" muted style={styles.dropText}>
-                {isExtracting ? "Reading payment plan" : "We'll read it and fill the payment plan"}
+                {isExtracting ? t("newDeal.readingPaymentPlan") : t("newDeal.readAndFillPlan")}
               </Text>
             </PressableScale>
             {aiMessage ? (
@@ -183,35 +185,35 @@ export function NewDealScreen() {
           <Controller
             control={control}
             name="project"
-            render={({ field, fieldState }) => <Input label="Project" placeholder="Marina Vista - 2BR" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />}
+            render={({ field, fieldState }) => <Input label={t("newDeal.project")} placeholder={t("newDeal.projectPlaceholder")} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />}
           />
           <Controller
             control={control}
             name="developer"
-            render={({ field, fieldState }) => <Input label="Developer" placeholder="Emaar" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />}
+            render={({ field, fieldState }) => <Input label={t("newDeal.developer")} placeholder={t("newDeal.developerPlaceholder")} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />}
           />
           <Controller
             control={control}
             name="buyerName"
-            render={({ field, fieldState }) => <Input label="Buyer name" placeholder="Omar Al-Farsi" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />}
+            render={({ field, fieldState }) => <Input label={t("newDeal.buyerName")} placeholder={t("newDeal.buyerNamePlaceholder")} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />}
           />
           <Controller
             control={control}
             name="totalValueAed"
-            render={({ field, fieldState }) => <Input label="Total value (AED)" placeholder="3,200,000" keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />}
+            render={({ field, fieldState }) => <Input label={t("newDeal.totalValueAed")} placeholder={t("newDeal.totalValuePlaceholder")} keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />}
           />
         </MotiView>
 
         <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360, delay: 240 }}>
           <View style={styles.planHeader}>
             <Text variant="cardTitle" style={styles.planTitle}>
-              Payment plan
+              {t("newDeal.paymentPlan")}
             </Text>
             <Button
               variant="text"
               size="sm"
-              label="Add milestone"
-              accessibilityLabel="Add milestone"
+              label={t("newDeal.addMilestone")}
+              accessibilityLabel={t("newDeal.addMilestone")}
               onPress={addMilestone}
               leftIcon={<Plus size={15} color={tokens.colors.accent} strokeWidth={2.3} />}
             />
@@ -237,7 +239,7 @@ export function NewDealScreen() {
           </Text>
         ) : null}
 
-        <GoldButton label={isSaving ? "Saving deal" : "Save deal"} disabled={isSaving || isExtracting} onPress={handleSubmit(saveDeal)} style={[styles.saveButton, (isSaving || isExtracting) && styles.disabled]} />
+        <GoldButton label={isSaving ? t("newDeal.savingDeal") : t("newDeal.saveDeal")} disabled={isSaving || isExtracting} onPress={handleSubmit(saveDeal)} style={[styles.saveButton, (isSaving || isExtracting) && styles.disabled]} />
       </ScrollView>
     </Screen>
   );
@@ -252,15 +254,16 @@ type MilestoneEditorProps = {
 };
 
 function MilestoneEditor({ control, index, canRemove, onRemove, onTriggerTypeChange }: MilestoneEditorProps) {
+  const { t } = useTranslation();
   return (
     <View style={styles.milestoneCard}>
       <View style={styles.milestoneTop}>
         <Controller
           control={control}
           name={`milestones.${index}.label`}
-          render={({ field, fieldState }) => <Input label="Label" placeholder="Down payment" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
+          render={({ field, fieldState }) => <Input label={t("newDeal.label")} placeholder={t("newDeal.labelPlaceholder")} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
         />
-        {canRemove ? <IconButton icon={Trash2} label="Remove milestone" onPress={onRemove} style={styles.removeButton} /> : null}
+        {canRemove ? <IconButton icon={Trash2} label={t("newDeal.removeMilestone")} onPress={onRemove} style={styles.removeButton} /> : null}
       </View>
 
       <Controller
@@ -269,7 +272,7 @@ function MilestoneEditor({ control, index, canRemove, onRemove, onTriggerTypeCha
         render={({ field }) => (
           <View style={styles.triggerRow}>
             {triggerOptions.map((option) => (
-              <OptionChip key={option.value} label={option.label} selected={field.value === option.value} onPress={() => onTriggerTypeChange(option.value)} />
+              <OptionChip key={option.value} label={t(option.labelKey)} selected={field.value === option.value} onPress={() => onTriggerTypeChange(option.value)} />
             ))}
           </View>
         )}
@@ -279,23 +282,23 @@ function MilestoneEditor({ control, index, canRemove, onRemove, onTriggerTypeCha
         <Controller
           control={control}
           name={`milestones.${index}.percent`}
-          render={({ field, fieldState }) => <Input label="%" placeholder="20" keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
+          render={({ field, fieldState }) => <Input label={t("newDeal.percent")} placeholder="20" keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
         />
         <Controller
           control={control}
           name={`milestones.${index}.amountAed`}
-          render={({ field, fieldState }) => <Input label="AED" placeholder="640,000" keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
+          render={({ field, fieldState }) => <Input label={t("newDeal.amountAed")} placeholder="640,000" keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
         />
       </View>
       <Controller
         control={control}
         name={`milestones.${index}.dueDate`}
-        render={({ field, fieldState }) => <Input label="Due date" placeholder="2026-06-19" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
+        render={({ field, fieldState }) => <Input label={t("newDeal.dueDate")} placeholder={t("newDeal.dueDatePlaceholder")} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
       />
       <Controller
         control={control}
         name={`milestones.${index}.triggerValue`}
-        render={({ field }) => <Input label="Trigger" placeholder="40% built" value={field.value ?? ""} onChangeText={field.onChange} onBlur={field.onBlur} style={styles.compactInput} />}
+        render={({ field }) => <Input label={t("newDeal.trigger")} placeholder={t("newDeal.triggerPlaceholder")} value={field.value ?? ""} onChangeText={field.onChange} onBlur={field.onBlur} style={styles.compactInput} />}
       />
     </View>
   );

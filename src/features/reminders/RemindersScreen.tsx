@@ -1,9 +1,11 @@
 import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
+import type { TFunction } from "i18next";
 import { BellRing, MessageCircle, RefreshCw } from "lucide-react-native";
 import { MotiView } from "moti";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Linking, StyleSheet, View, type TextStyle, type ViewStyle } from "react-native";
 
 import type { ReminderItem, ReminderUrgency } from "@/shared/data/repositories/remindersRepository";
@@ -19,6 +21,7 @@ import { registerForReminderPush } from "./notificationRegistration";
 const remindersQueryKey = ["reminders"] as const;
 
 export function RemindersScreen() {
+  const { t } = useTranslation();
   const { reminders: remindersRepository } = useRepositories();
   const pushRemindersEnabled = useFeatureFlag("push_reminders");
   const whatsappRemindersEnabled = useFeatureFlag("whatsapp_reminders");
@@ -35,7 +38,7 @@ export function RemindersScreen() {
       setMessage(successMessage);
     },
     onError: (error) => {
-      setMessage(error instanceof Error ? error.message : "Could not register this device for push reminders.");
+      setMessage(error instanceof Error ? error.message : t("reminders.pushRegisterError"));
     },
   });
 
@@ -46,9 +49,9 @@ export function RemindersScreen() {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
       await Linking.openURL(reminder.whatsappUrl);
     } catch {
-      setMessage("Could not open the WhatsApp share link.");
+      setMessage(t("reminders.whatsappOpenError"));
     }
-  }, []);
+  }, [t]);
 
   const reminders = remindersQuery.data ?? [];
   const readyCount = reminders.filter((reminder) => reminder.urgency === "ready" || reminder.urgency === "overdue").length;
@@ -113,15 +116,16 @@ type ReminderListHeaderProps = {
 };
 
 function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isRegistering, isFetching, message, onRegisterPush, onRefresh }: ReminderListHeaderProps) {
+  const { t } = useTranslation();
   return (
     <View>
       <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360 }}>
-        <Text variant="eyebrow">Reminders</Text>
+        <Text variant="eyebrow">{t("reminders.eyebrow")}</Text>
         <Text variant="h1" style={styles.title}>
-          What is due next
+          {t("reminders.title")}
         </Text>
         <Text variant="body" muted style={styles.lede}>
-          Milestone notices are queued for push and email before each due date.
+          {t("reminders.lede")}
         </Text>
       </MotiView>
 
@@ -129,7 +133,7 @@ function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isR
         <View style={styles.summaryPanel}>
           <View>
             <Text variant="caption" muted>
-              Ready now
+              {t("reminders.readyNow")}
             </Text>
             <Text variant="cardTitle" style={styles.summaryValue}>
               {readyCount}
@@ -138,7 +142,7 @@ function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isR
           <View style={styles.summaryDivider} />
           <View>
             <Text variant="caption" muted>
-              Failed
+              {t("reminders.failed")}
             </Text>
             <Text variant="cardTitle" style={[styles.summaryValue, failedCount > 0 && styles.failedText]}>
               {failedCount}
@@ -147,8 +151,8 @@ function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isR
         </View>
 
         <View style={styles.actions}>
-          {pushRemindersEnabled ? <GoldButton label={isRegistering ? "Connecting push" : "Enable push reminders"} disabled={isRegistering} onPress={onRegisterPush} style={isRegistering && styles.disabled} /> : null}
-          <GhostButton label={isFetching ? "Refreshing" : "Refresh schedule"} onPress={onRefresh} />
+          {pushRemindersEnabled ? <GoldButton label={isRegistering ? t("reminders.connectingPush") : t("reminders.enablePushReminders")} disabled={isRegistering} onPress={onRegisterPush} style={isRegistering && styles.disabled} /> : null}
+          <GhostButton label={isFetching ? t("reminders.refreshing") : t("reminders.refreshSchedule")} onPress={onRefresh} />
         </View>
 
         {message ? (
@@ -162,12 +166,13 @@ function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isR
 }
 
 function ReminderListEmpty({ isLoading, error, onRefresh }: { isLoading: boolean; error: Error | null; onRefresh: () => void }) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <View style={styles.centerState}>
         <RefreshCw size={18} color={tokens.colors.accent} strokeWidth={2.1} />
         <Text variant="mono" muted>
-          Loading reminder queue
+          {t("reminders.loadingQueue")}
         </Text>
       </View>
     );
@@ -177,12 +182,12 @@ function ReminderListEmpty({ isLoading, error, onRefresh }: { isLoading: boolean
     return (
       <View style={styles.emptyState}>
         <Text variant="cardTitle" style={styles.emptyTitle}>
-          Reminder queue unavailable
+          {t("reminders.queueUnavailableTitle")}
         </Text>
         <Text variant="body" muted style={styles.emptyBody}>
           {error.message}
         </Text>
-        <GhostButton label="Try again" onPress={onRefresh} />
+        <GhostButton label={t("reminders.tryAgain")} onPress={onRefresh} />
       </View>
     );
   }
@@ -191,16 +196,17 @@ function ReminderListEmpty({ isLoading, error, onRefresh }: { isLoading: boolean
     <View style={styles.emptyState}>
       <BellRing size={22} color={tokens.colors.accent} strokeWidth={2.1} />
       <Text variant="cardTitle" style={styles.emptyTitle}>
-        No dated milestones
+        {t("reminders.emptyTitle")}
       </Text>
       <Text variant="body" muted style={styles.emptyBody}>
-        Add due dates to a payment plan and Meridian will queue push and email reminders automatically.
+        {t("reminders.emptyBody")}
       </Text>
     </View>
   );
 }
 
 function ReminderRow({ reminder, whatsappEnabled, onShare }: { reminder: ReminderItem; whatsappEnabled: boolean; onShare: (reminder: ReminderItem) => void }) {
+  const { t } = useTranslation();
   const urgencyStyle = urgencyStyles[reminder.urgency];
 
   return (
@@ -212,7 +218,7 @@ function ReminderRow({ reminder, whatsappEnabled, onShare }: { reminder: Reminde
             {reminder.milestoneLabel}
           </Text>
           <Text variant="mono" style={[styles.status, urgencyStyle.text]}>
-            {statusLabel(reminder)}
+            {statusLabel(reminder, t)}
           </Text>
         </View>
         <Text variant="caption" muted style={styles.dealLabel}>
@@ -220,21 +226,21 @@ function ReminderRow({ reminder, whatsappEnabled, onShare }: { reminder: Reminde
         </Text>
         <View style={styles.metaRow}>
           <Text variant="mono" muted>
-            AED <Text variant="mono">{reminder.amountLabel}</Text>
+            {t("reminders.amountPrefix")} <Text variant="mono">{reminder.amountLabel}</Text>
           </Text>
           <Text variant="mono" muted>
-            Due <Text variant="mono">{reminder.dueDateLabel}</Text>
+            {t("reminders.duePrefix")} <Text variant="mono">{reminder.dueDateLabel}</Text>
           </Text>
           <Text variant="mono" muted>
-            {channelLabel(reminder)}
+            {channelLabel(reminder, t)}
           </Text>
         </View>
         {whatsappEnabled ? (
           <Button
             variant="gold"
             size="sm"
-            label="Share to WhatsApp"
-            accessibilityLabel={`Share ${reminder.milestoneLabel} to WhatsApp`}
+            label={t("reminders.shareToWhatsapp")}
+            accessibilityLabel={t("reminders.shareToWhatsappA11y", { milestone: reminder.milestoneLabel })}
             onPress={() => onShare(reminder)}
             leftIcon={<MessageCircle size={15} color={tokens.colors.goldInk} strokeWidth={2.4} />}
             style={styles.whatsappButton}
@@ -245,21 +251,21 @@ function ReminderRow({ reminder, whatsappEnabled, onShare }: { reminder: Reminde
   );
 }
 
-function channelLabel(reminder: ReminderItem) {
-  return reminder.channels.map((channel) => (channel === "push" ? "Push" : "Email")).join(" + ");
+function channelLabel(reminder: ReminderItem, t: TFunction) {
+  return reminder.channels.map((channel) => (channel === "push" ? t("reminders.channelPush") : t("reminders.channelEmail"))).join(" + ");
 }
 
-function statusLabel(reminder: ReminderItem) {
+function statusLabel(reminder: ReminderItem, t: TFunction) {
   if (reminder.status === "failed") {
-    return "Failed";
+    return t("reminders.statusFailed");
   }
 
   if (reminder.urgency === "overdue") {
-    return "Overdue";
+    return t("reminders.statusOverdue");
   }
 
   if (reminder.urgency === "ready") {
-    return "Ready now";
+    return t("reminders.statusReadyNow");
   }
 
   return reminder.sendAtLabel;

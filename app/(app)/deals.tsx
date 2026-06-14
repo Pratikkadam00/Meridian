@@ -2,6 +2,7 @@ import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useRouter } from "expo-router";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 
 import type { DashboardDeal } from "@/shared/data/repositories/dealsRepository";
@@ -13,6 +14,7 @@ import { Screen } from "@/shared/ui/Screen";
 import { Text } from "@/shared/ui/Text";
 
 export default function DealsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { deals: dealsRepository } = useRepositories();
   const dealsQuery = useQuery({
@@ -39,10 +41,10 @@ export default function DealsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={<DealListHeader error={dealsQuery.error} />}
-        ListEmptyComponent={dealsQuery.isLoading ? <ListState label="Loading deals" /> : <ListState label="No deals yet" />}
+        ListEmptyComponent={dealsQuery.isLoading ? <ListState label={t("deals.loading")} /> : <ListState label={t("deals.empty")} />}
         ListFooterComponent={
           <Link href="/new-deal" asChild>
-            <GoldButton label="New deal" />
+            <GoldButton label={t("deals.newDeal")} />
           </Link>
         }
       />
@@ -51,11 +53,12 @@ export default function DealsScreen() {
 }
 
 function DealListHeader({ error }: { error: Error | null }) {
+  const { t } = useTranslation();
   return (
     <View>
-      <Text variant="eyebrow">Portfolio</Text>
+      <Text variant="eyebrow">{t("deals.eyebrow")}</Text>
       <Text variant="h1" style={styles.title}>
-        Deal list
+        {t("deals.title")}
       </Text>
       {error ? (
         <Text variant="caption" style={styles.error}>
@@ -67,9 +70,10 @@ function DealListHeader({ error }: { error: Error | null }) {
 }
 
 function DealListRow({ deal, onPress }: { deal: DashboardDeal; onPress: (dealId: string) => void }) {
+  const { t } = useTranslation();
   return (
     <PressableScale
-      accessibilityLabel={`Open ${deal.projectName}`}
+      accessibilityLabel={t("deals.openDeal", { projectName: deal.projectName })}
       focusRadius={tokens.radius.panel + tokens.control.focusRingOffset}
       pressScale={0.985}
       haptic
