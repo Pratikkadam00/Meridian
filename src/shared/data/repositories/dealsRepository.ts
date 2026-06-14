@@ -141,6 +141,10 @@ export type SupabaseDealDetailRow = {
   milestones: SupabaseMilestoneRow[] | null;
 };
 
+// The hand-maintained database.types do not give supabase-js enough to infer
+// the Update parameter for these tables (it resolves to `never`), so the typed
+// update builders are declared explicitly. Regenerating with
+// `supabase gen types typescript` would let these be fully inferred.
 type MilestoneUpdateQuery = PromiseLike<{ error: PostgrestError | null }> & {
   eq: (column: "deal_id" | "id", value: string) => MilestoneUpdateQuery;
 };
@@ -155,16 +159,6 @@ type ReminderUpdateQuery = PromiseLike<{ error: PostgrestError | null }> & {
 
 type ReminderUpdateBuilder = {
   update: (values: Database["public"]["Tables"]["reminders"]["Update"]) => ReminderUpdateQuery;
-};
-
-type QueryResult<T> = Promise<{ data: T; error: PostgrestError | null }>;
-
-type ProfileSelectBuilder = {
-  select: (columns: string) => {
-    eq: (column: "id", value: string) => {
-      single: () => QueryResult<ProfileRow>;
-    };
-  };
 };
 
 type StorageUploadResponse = {
@@ -664,10 +658,7 @@ export class SupabaseDealsRepository implements DealsRepository {
     const paidDate = new Date().toISOString().slice(0, 10);
     const milestones = this.client.from("milestones") as unknown as MilestoneUpdateBuilder;
     const { error } = await milestones
-      .update({
-        paid_date: paidDate,
-        status: "paid",
-      })
+      .update({ paid_date: paidDate, status: "paid" })
       .eq("deal_id", dealId)
       .eq("id", milestoneId);
 
@@ -694,8 +685,7 @@ export class SupabaseDealsRepository implements DealsRepository {
       throw new Error("Sign in before creating a deal.");
     }
 
-    const profiles = this.client.from("profiles") as unknown as ProfileSelectBuilder;
-    const { data, error } = await profiles.select("*").eq("id", user.id).single();
+    const { data, error } = await this.client.from("profiles").select("*").eq("id", user.id).single();
 
     if (error) {
       throw new Error(error.message);
@@ -707,9 +697,7 @@ export class SupabaseDealsRepository implements DealsRepository {
   private async cancelPendingReminderRows(milestoneId: string) {
     const reminders = this.client.from("reminders") as unknown as ReminderUpdateBuilder;
     const { error } = await reminders
-      .update({
-        status: "cancelled",
-      })
+      .update({ status: "cancelled" })
       .eq("milestone_id", milestoneId)
       .eq("status", "pending");
 
