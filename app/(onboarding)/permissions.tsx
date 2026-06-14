@@ -2,11 +2,11 @@ import { Bell, LockKeyhole } from "lucide-react-native";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 
 import { OnboardingStepView, persistOnboardingStep, useOnboardingStepTracking } from "@/features/onboarding";
+import { hasBiometricHardware, setBiometricLockEnabled } from "@/features/security/appLock";
 import { trackAnalyticsEvent } from "@/shared/observability/analytics";
 import { captureNonFatalError } from "@/shared/observability/sentry";
 import { tokens } from "@/shared/theme/tokens";
@@ -14,8 +14,6 @@ import { GoldButton, GhostButton } from "@/shared/ui/Button";
 import { ProgressDots } from "@/shared/ui/ProgressDots";
 import { Screen } from "@/shared/ui/Screen";
 import { Text } from "@/shared/ui/Text";
-
-const BIOMETRIC_KEY = "meridian.biometricLock.enabled.v1";
 
 export default function PermissionsScreen() {
   const [message, setMessage] = useState<string | null>(null);
@@ -62,9 +60,7 @@ export default function PermissionsScreen() {
     }
 
     try {
-      const [hasHardware, enrolled] = await Promise.all([LocalAuthentication.hasHardwareAsync(), LocalAuthentication.isEnrolledAsync()]);
-
-      if (!hasHardware || !enrolled) {
+      if (!(await hasBiometricHardware())) {
         setMessage("Set up Face ID or device biometrics first, then enable app lock in Settings.");
         return;
       }
@@ -75,7 +71,7 @@ export default function PermissionsScreen() {
       });
 
       if (result.success) {
-        await SecureStore.setItemAsync(BIOMETRIC_KEY, "1");
+        await setBiometricLockEnabled(true);
         setBiometricEnabled(true);
         setMessage("Biometric app lock is ready.");
       }

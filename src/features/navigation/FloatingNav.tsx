@@ -1,9 +1,9 @@
 import { router, usePathname, type Href } from "expo-router";
-import { Bell, Home, Layers3 } from "lucide-react-native";
+import { Bell, Home, Layers3, UserRound } from "lucide-react-native";
 
 import { FloatingNav as FloatingNavShell, type FloatingNavItem } from "@/shared/ui/FloatingNav";
 
-type DestinationKey = "home" | "deals" | "reminders";
+type DestinationKey = "home" | "deals" | "reminders" | "settings";
 
 type Destination = FloatingNavItem<DestinationKey> & {
   href: Href;
@@ -28,6 +28,12 @@ const destinations: Destination[] = [
     label: "Reminders",
     icon: Bell,
   },
+  {
+    key: "settings",
+    href: "/settings",
+    label: "Profile",
+    icon: UserRound,
+  },
 ];
 
 function getActiveKey(pathname: string): DestinationKey | null {
@@ -41,6 +47,10 @@ function getActiveKey(pathname: string): DestinationKey | null {
 
   if (pathname.startsWith("/reminders")) {
     return "reminders";
+  }
+
+  if (pathname.startsWith("/settings")) {
+    return "settings";
   }
 
   return null;

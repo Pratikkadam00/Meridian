@@ -16,6 +16,7 @@ import { useEffect } from "react";
 import { LogBox } from "react-native";
 
 import { useNotificationObservers } from "@/features/reminders/notificationObservers";
+import { AppLockGate } from "@/features/security/AppLockGate";
 import { LaunchSplashGate } from "@/features/splash/LaunchSplashGate";
 import { MeridianProviders } from "@/shared/providers/MeridianProviders";
 import { AppErrorFallback } from "@/shared/ui/AppErrorFallback";
@@ -66,11 +67,13 @@ function RootLayout() {
   return (
     <MeridianProviders>
       <LaunchSplashGate fontsReady={fontsLoaded || Boolean(fontError)}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(onboarding)" />
-          <Stack.Screen name="(app)" />
-          <Stack.Screen name="dev/force-error" />
-        </Stack>
+        <AppLockGate>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(onboarding)" />
+            <Stack.Screen name="(app)" />
+            <Stack.Screen name="dev/force-error" />
+          </Stack>
+        </AppLockGate>
       </LaunchSplashGate>
     </MeridianProviders>
   );
