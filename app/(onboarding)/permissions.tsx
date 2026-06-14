@@ -8,6 +8,7 @@ import { Platform, StyleSheet, View } from "react-native";
 
 import { OnboardingStepView, persistOnboardingStep, useOnboardingStepTracking } from "@/features/onboarding";
 import { trackAnalyticsEvent } from "@/shared/observability/analytics";
+import { captureNonFatalError } from "@/shared/observability/sentry";
 import { tokens } from "@/shared/theme/tokens";
 import { GoldButton, GhostButton } from "@/shared/ui/Button";
 import { ProgressDots } from "@/shared/ui/ProgressDots";
@@ -27,7 +28,13 @@ export default function PermissionsScreen() {
       pushStatus,
       biometricEnabled,
     });
-    await persistOnboardingStep("education");
+    // Never dead-end onboarding (PRD §5): if persisting the step fails, still
+    // advance — the resume gate will reconcile later.
+    try {
+      await persistOnboardingStep("education");
+    } catch (error) {
+      captureNonFatalError("onboarding_step_persist_failed", error, { surface: "permissions" });
+    }
     router.push("/education");
   }
 
@@ -54,22 +61,27 @@ export default function PermissionsScreen() {
       return;
     }
 
-    const [hasHardware, enrolled] = await Promise.all([LocalAuthentication.hasHardwareAsync(), LocalAuthentication.isEnrolledAsync()]);
+    try {
+      const [hasHardware, enrolled] = await Promise.all([LocalAuthentication.hasHardwareAsync(), LocalAuthentication.isEnrolledAsync()]);
 
-    if (!hasHardware || !enrolled) {
-      setMessage("Set up Face ID or device biometrics first, then enable app lock in Settings.");
-      return;
-    }
+      if (!hasHardware || !enrolled) {
+        setMessage("Set up Face ID or device biometrics first, then enable app lock in Settings.");
+        return;
+      }
 
-    const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: "Enable Meridian app lock",
-      cancelLabel: "Not now",
-    });
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Enable Meridian app lock",
+        cancelLabel: "Not now",
+      });
 
-    if (result.success) {
-      await SecureStore.setItemAsync(BIOMETRIC_KEY, "1");
-      setBiometricEnabled(true);
-      setMessage("Biometric app lock is ready.");
+      if (result.success) {
+        await SecureStore.setItemAsync(BIOMETRIC_KEY, "1");
+        setBiometricEnabled(true);
+        setMessage("Biometric app lock is ready.");
+      }
+    } catch (error) {
+      captureNonFatalError("biometric_enroll_failed", error, { surface: "permissions" });
+      setMessage("Could not enable biometric lock. You can set it up later in Settings.");
     }
   }
 

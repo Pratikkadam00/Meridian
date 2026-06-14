@@ -23,7 +23,7 @@ export function RepositoryProvider({ children }: PropsWithChildren) {
     const previewSessionStore = new PreviewSessionStore();
 
     return {
-      isSupabaseConfigured: true,
+      isSupabaseConfigured: Boolean(supabase),
       auth: supabase ? new SupabaseAuthRepository(supabase) : new PreviewAuthRepository(previewSessionStore),
       deals: supabase ? new SupabaseDealsRepository(supabase) : new PreviewDealsRepository(),
       onboarding: supabase ? new SupabaseOnboardingRepository(supabase) : new PreviewOnboardingRepository(previewSessionStore),
