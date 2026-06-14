@@ -186,7 +186,7 @@ type CreateDealWithPlanArgs = {
   p_total_value_aed: string;
   p_spa_number: string | null;
   p_handover_estimate: string | null;
-  p_milestones: Array<{
+  p_milestones: {
     label: string;
     trigger_type: MilestoneTrigger;
     trigger_value: string | null;
@@ -195,7 +195,7 @@ type CreateDealWithPlanArgs = {
     due_date: string | null;
     status: MilestoneStatus;
     source: MilestoneSource;
-  }>;
+  }[];
   p_document: { name: string; storage_path: string; kind: string } | null;
 };
 

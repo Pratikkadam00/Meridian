@@ -35,7 +35,9 @@ export function AppLockGate({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
+    // One-time launch auth check; attempt() drives its own state machine.
     if (Platform.OS !== "web") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void attempt();
     }
   }, [attempt]);

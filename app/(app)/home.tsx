@@ -32,7 +32,7 @@ export default function HomeScreen() {
     queryFn: () => dealsRepository.listDashboardDeals(),
   });
 
-  const deals = dealsQuery.data ?? [];
+  const deals = useMemo(() => dealsQuery.data ?? [], [dealsQuery.data]);
   const safeActiveIndex = deals.length === 0 ? 0 : Math.min(activeIndex, deals.length - 1);
   const metrics = useMemo(() => getPortfolioMetrics(deals), [deals]);
 
