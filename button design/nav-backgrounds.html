@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Meridian — Footer Nav & Backgrounds (Midnight)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0f13;--panel:#16181f;--panel2:#1b1e26;--line:#262a33;--ink:#eceef2;--mut:#8b919c;
+  --accent:#c8a96a;--accent2:#a6854a;--goldb:#e3c884;--ease:cubic-bezier(.22,.61,.36,1);--spring:cubic-bezier(.34,1.4,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:48px 20px 80px}
+.wrap{max-width:760px;margin:0 auto}
+.title{font-family:'Bricolage Grotesque';font-weight:700;font-size:30px;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin:6px 0 36px}
+section{margin-bottom:46px}
+.sh{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:24px}
+.sh .n{font-family:'JetBrains Mono';font-size:11px;color:var(--accent);letter-spacing:.12em}
+.sh h2{font-family:'Bricolage Grotesque';font-weight:600;font-size:19px}
+.sh .d{color:var(--mut);font-size:12.5px;margin-left:auto;max-width:320px;text-align:right}
+.cap{font-family:'JetBrains Mono';font-size:10.5px;color:var(--mut);margin-top:12px;text-align:center}
+
+/* faux screen to show the nav floating */
+.screenmock{position:relative;height:200px;border-radius:26px;overflow:hidden;background:radial-gradient(120% 50% at 50% -8%,rgba(200,169,106,.08),transparent 55%),var(--bg);border:1px solid var(--line)}
+.screenmock .ghostcard{position:absolute;left:20px;right:20px;top:24px;height:90px;border-radius:18px;background:linear-gradient(165deg,#191c24,#14161c);border:1px solid var(--line);opacity:.7}
+
+/* ---------- FOOTER NAV ---------- */
+.navwrap{position:absolute;left:0;right:0;bottom:0;height:96px;display:flex;justify-content:center;align-items:flex-end;padding-bottom:18px}
+.nav{position:relative;width:84%;max-width:330px;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-radius:22px;
+  background:rgba(22,24,31,.72);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  border:1px solid rgba(200,169,106,.22);box-shadow:0 18px 44px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05)}
+.nav .ind{position:absolute;top:8px;height:44px;width:44px;border-radius:14px;background:radial-gradient(circle at 50% 45%,rgba(200,169,106,.32),rgba(200,169,106,.08) 70%);transition:transform .45s var(--spring)}
+.ni{position:relative;z-index:2;width:44px;height:44px;display:grid;place-items:center;color:var(--mut);font-size:18px;border:0;background:none;cursor:pointer;transition:color .3s,transform .15s}
+.ni.on{color:var(--goldb)}.ni:active{transform:scale(.88)}
+.gap{width:48px}
+.fab{position:absolute;left:50%;top:-15px;transform:translateX(-50%);width:58px;height:58px;border-radius:20px;background:linear-gradient(150deg,var(--goldb),var(--accent2));color:#1a1407;font-size:26px;font-weight:700;display:grid;place-items:center;border:0;cursor:pointer;box-shadow:0 12px 28px rgba(200,169,106,.4),0 4px 10px rgba(0,0,0,.45);transition:transform .15s}
+.fab:active{transform:translateX(-50%) scale(.93)}
+/* variant: no fab, 4 even icons */
+.nav.even{justify-content:space-around}
+.nav.even .gap{display:none}
+/* variant: contracted (scrolled) — labels hidden, slightly narrower already; show a pill */
+
+/* ---------- BACKGROUNDS ---------- */
+.bgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.swatch{border-radius:18px;height:150px;border:1px solid var(--line);position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:14px}
+.swatch .lab{font-family:'JetBrains Mono';font-size:10.5px;color:var(--ink);background:rgba(0,0,0,.35);padding:5px 9px;border-radius:7px;backdrop-filter:blur(6px)}
+.bg-canvas{background:var(--bg)}
+.bg-splash{background:radial-gradient(80% 60% at 50% 42%,rgba(200,169,106,.16),transparent 60%),var(--bg)}
+.bg-screen{background:radial-gradient(120% 45% at 50% -8%,rgba(200,169,106,.09),transparent 55%),var(--bg)}
+.bg-card{background:linear-gradient(165deg,#191c24,#14161c)}
+.bg-panel{background:var(--panel)}
+.bg-due{background:linear-gradient(165deg,#191c24,#14161c);box-shadow:inset 0 0 0 1px rgba(200,169,106,.45),inset 0 0 30px rgba(200,169,106,.06)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">Footer nav & backgrounds</div>
+  <div class="sub">Midnight theme. Tap the nav icons — the gold indicator springs. The signature floating capsule, never a flush tab bar.</div>
+
+  <!-- FOOTER NAV -->
+  <section>
+    <div class="sh"><span class="n">01</span><h2>Floating nav — default</h2><span class="d">Detached glass capsule · springing gold indicator · elevated gold FAB. 84% width.</span></div>
+    <div class="screenmock">
+      <div class="ghostcard"></div>
+      <div class="navwrap">
+        <nav class="nav" id="nav1"><span class="ind" id="ind1"></span>
+          <button class="ni on"><span>▦</span></button><button class="ni"><span>◴</span></button>
+          <span class="gap"></span>
+          <button class="ni"><span>◫</span></button><button class="ni"><span>◍</span></button>
+        </nav>
+        <button class="fab">+</button>
+      </div>
+    </div>
+    <div class="cap">Tap icons → indicator springs · FAB → New deal</div>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">02</span><h2>Variant — no FAB (4 destinations)</h2><span class="d">For surfaces without a primary create action (e.g. Settings).</span></div>
+    <div class="screenmock">
+      <div class="navwrap">
+        <nav class="nav even" id="nav2"><span class="ind" id="ind2"></span>
+          <button class="ni"><span>▦</span></button><button class="ni on"><span>◴</span></button><button class="ni"><span>◫</span></button><button class="ni"><span>◍</span></button>
+        </nav>
+      </div>
+    </div>
+    <div class="cap">Even spacing · indicator on the active (Due) item</div>
+  </section>
+
+  <!-- BACKGROUNDS -->
+  <section>
+    <div class="sh"><span class="n">03</span><h2>Backgrounds & surfaces</h2><span class="d">Obsidian canvas with restrained gold light. No second hue.</span></div>
+    <div class="bgrid">
+      <div class="swatch bg-screen"><span class="lab">Screen — top gold glow (all screens)</span></div>
+      <div class="swatch bg-splash"><span class="lab">Splash — centered gold glow</span></div>
+      <div class="swatch bg-canvas"><span class="lab">Canvas — #0e0f13 (flat)</span></div>
+      <div class="swatch bg-panel"><span class="lab">Panel — #16181f (cards/inputs)</span></div>
+      <div class="swatch bg-card"><span class="lab">Deck card — gradient #191c24→#14161c</span></div>
+      <div class="swatch bg-due"><span class="lab">Deck card · due — gold glow border</span></div>
+    </div>
+  </section>
+</div>
+
+<script>
+  function wire(navId,indId){
+    var nav=document.getElementById(navId),ind=document.getElementById(indId);
+    var items=[].slice.call(nav.querySelectorAll('.ni'));
+    function move(b){ind.style.transform='translateX('+(b.offsetLeft-(navId==='nav1'?18:0))+'px)';}
+    // align indicator to button left within padding
+    function pos(b){var navRect=nav.getBoundingClientRect();var bRect=b.getBoundingClientRect();ind.style.transform='translateX('+(bRect.left-navRect.left)+'px)';}
+    items.forEach(function(b){b.addEventListener('click',function(){items.forEach(function(x){x.classList.remove('on');});b.classList.add('on');pos(b);});});
+    var on=nav.querySelector('.ni.on')||items[0];
+    setTimeout(function(){pos(on);},60);
+  }
+  wire('nav1','ind1');wire('nav2','ind2');
+</script>
+</body>
+</html>

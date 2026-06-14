@@ -1,0 +1,1 @@
+export { DealDetailScreen } from "./DealDetailScreen";

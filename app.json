@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Meridian",
+    "slug": "meridian",
+    "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "scheme": "meridian",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ae.meridian.broker"
+    },
+    "android": {
+      "package": "ae.meridian.broker",
+      "adaptiveIcon": {
+        "backgroundColor": "#0e0f13",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-image",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0e0f13",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160
+        }
+      ],
+      "expo-font",
+      "expo-localization",
+      [
+        "expo-notifications",
+        {
+          "color": "#c8a96a"
+        }
+      ],
+      "@sentry/react-native"
+    ],
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

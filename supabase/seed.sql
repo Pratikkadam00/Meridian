@@ -1,0 +1,1 @@
+-- Intentionally empty. Meridian seeds tenant data during onboarding.

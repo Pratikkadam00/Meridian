@@ -1,0 +1,57 @@
+appId: ae.meridian.broker
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Track every milestone, booking to handover."
+- takeScreenshot: "onboarding-welcome"
+- tapOn: "Get started"
+- assertVisible: "Create your workspace"
+- takeScreenshot: "onboarding-account"
+- tapOn: "Already have an account? Sign in"
+- tapOn: "Work email"
+- inputText: "${MAESTRO_TEST_EMAIL}"
+- tapOn: "Password"
+- inputText: "${MAESTRO_TEST_PASSWORD}"
+- tapOn: "Sign in"
+- tapOn:
+    text: "Continue"
+    optional: true
+- tapOn:
+    text: "Maybe later"
+    optional: true
+- assertVisible:
+    text: "How Meridian works"
+    optional: true
+- tapOn:
+    text: "Skip to dashboard"
+    optional: true
+- assertVisible:
+    text: "AED"
+    optional: true
+- takeScreenshot: "home"
+- tapOn:
+    id: "New deal"
+    optional: true
+- tapOn:
+    text: "New deal"
+    optional: true
+- assertVisible: "New deal"
+- tapOn: "Project"
+- inputText: "Creek Edge - 1BR"
+- tapOn: "Developer"
+- inputText: "Emaar"
+- tapOn: "Buyer name"
+- inputText: "Maestro Buyer"
+- tapOn: "Total value (AED)"
+- inputText: "1200000"
+- tapOn: "Amount (AED)"
+- inputText: "240000"
+- tapOn: "Save deal"
+- assertVisible:
+    text: "Paid to date"
+    optional: true
+- takeScreenshot: "deal-detail"
+- tapOn:
+    text: ".*Mark paid"
+    optional: true
+- takeScreenshot: "deal-detail-mark-paid"

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Meridian — Button System (Midnight)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0f13;--panel:#16181f;--panel2:#1b1e26;--line:#262a33;--ink:#eceef2;--mut:#8b919c;
+  --accent:#c8a96a;--accent2:#a6854a;--goldb:#e3c884;--ok:#5bbf9e;--due:#e0a458;--over:#e87c7c;
+  --disp:'Bricolage Grotesque';--mono:'JetBrains Mono';--ease:cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(120% 40% at 50% 0%,rgba(200,169,106,.06),transparent 55%),var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:48px 20px 80px}
+.wrap{max-width:760px;margin:0 auto}
+.title{font-family:var(--disp);font-weight:700;font-size:30px;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin-top:6px;margin-bottom:8px}
+.tokens{font-family:var(--mono);font-size:11.5px;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:18px 0 40px;line-height:1.8}
+.tokens b{color:var(--accent)}
+section{margin-bottom:46px}
+.sh{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:22px}
+.sh .n{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.12em}
+.sh h2{font-family:var(--disp);font-weight:600;font-size:19px;letter-spacing:-.01em}
+.sh .d{color:var(--mut);font-size:12.5px;margin-left:auto;max-width:300px;text-align:right}
+.row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.spec{display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+.cap{font-family:var(--mono);font-size:10.5px;color:var(--mut);letter-spacing:.04em}
+
+/* ---------- BUTTON SYSTEM ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:Inter;font-weight:600;border:0;cursor:pointer;position:relative;white-space:nowrap;
+  transition:transform .14s var(--ease),filter .14s,box-shadow .2s,border-color .2s,background .2s}
+.btn:active{transform:scale(.96)}
+.btn.block{width:300px}
+.lg{padding:16px 24px;font-size:15px;border-radius:14px}
+.md{padding:13px 20px;font-size:14px;border-radius:12px}
+.sm{padding:9px 16px;font-size:13px;border-radius:10px}
+/* variants */
+.gold{background:linear-gradient(150deg,var(--goldb),var(--accent2));color:#1a1407;font-weight:700;box-shadow:0 10px 26px rgba(200,169,106,.22)}
+.gold:active{filter:brightness(1.06);box-shadow:0 6px 14px rgba(200,169,106,.3)}
+.ghost{background:var(--panel);border:1px solid var(--line);color:var(--ink)}
+.ghost:active{border-color:#3a3f4a;background:var(--panel2)}
+.text{background:none;color:var(--accent);padding:8px 6px}
+.danger{background:rgba(232,124,124,.12);color:var(--over);border:1px solid rgba(232,124,124,.32)}
+.danger.solid{background:var(--over);color:#220c0c;border:0}
+/* states */
+.btn[disabled]{opacity:.4;pointer-events:none;box-shadow:none;filter:none}
+.is-pressed{transform:scale(.96);filter:brightness(1.06)}
+.is-pressed.ghost{filter:none;border-color:#3a3f4a;background:var(--panel2)}
+.focus{outline:2px solid var(--accent);outline-offset:3px}
+/* spinner */
+.spin{width:16px;height:16px;border:2px solid rgba(26,20,7,.35);border-top-color:#1a1407;border-radius:50%;animation:sp .7s linear infinite}
+.ghost .spin,.danger .spin{border-color:rgba(236,238,242,.25);border-top-color:var(--ink)}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* icon buttons */
+.ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:19px;border:0;cursor:pointer;transition:transform .14s,background .2s,border-color .2s}
+.ic:active{transform:scale(.9)}
+.ic.ghost{background:var(--panel);border:1px solid var(--line);color:var(--ink)}
+.ic.gold{background:linear-gradient(150deg,var(--goldb),var(--accent2));color:#1a1407}
+.ic.circle{border-radius:50%}
+.ic.ghost.circle{background:rgba(255,255,255,.04)}
+/* fab */
+.fab{width:60px;height:60px;border-radius:21px;background:linear-gradient(150deg,var(--goldb),var(--accent2));color:#1a1407;font-size:27px;font-weight:700;display:grid;place-items:center;border:0;cursor:pointer;box-shadow:0 12px 28px rgba(200,169,106,.4),0 4px 10px rgba(0,0,0,.45);transition:transform .14s}
+.fab:active{transform:scale(.93)}
+/* auth */
+.auth{width:300px;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px;border-radius:13px;font-weight:600;font-size:14.5px;cursor:pointer;border:0;transition:transform .14s,filter .14s}
+.auth:active{transform:scale(.97)}
+.auth.apple{background:#000;color:#fff;border:1px solid #2c2c2e}
+.auth.google{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.auth .g{width:18px;height:18px;border-radius:50%;background:conic-gradient(#ea4335,#fbbc05,#34a853,#4285f4);display:inline-block}
+/* segmented */
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{padding:11px 20px;border-radius:9px;font-size:13px;font-weight:500;color:var(--mut);border:0;background:none;cursor:pointer;transition:.2s}
+.seg button.on{background:var(--panel2);color:var(--ink)}
+/* option card / chip */
+.opt-card{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:16px;width:300px;cursor:pointer;transition:.2s}
+.opt-card.sel{border-color:var(--accent);background:rgba(200,169,106,.07)}
+.opt-card .ico{width:40px;height:40px;border-radius:12px;background:var(--panel2);display:grid;place-items:center;font-size:18px;color:var(--accent);flex:none}
+.opt-card .t{font-family:var(--disp);font-weight:600;font-size:15px}.opt-card .s{font-size:12px;color:var(--mut);margin-top:2px}
+.opt-card .tick{margin-left:auto;width:22px;height:22px;border-radius:50%;border:2px solid var(--line)}
+.opt-card.sel .tick{background:var(--accent);border-color:var(--accent)}
+.opt-chip{font-size:13px;font-weight:500;padding:10px 16px;border-radius:11px;background:var(--panel);border:1px solid var(--line);color:var(--mut);cursor:pointer;transition:.2s}
+.opt-chip.sel{border-color:var(--accent);background:rgba(200,169,106,.1);color:var(--ink)}
+/* status chips */
+.chip{font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:99px;display:inline-flex;gap:6px;align-items:center}
+.chip::before{content:"";width:5px;height:5px;border-radius:99px;background:currentColor}
+.chip.due{color:var(--due);background:rgba(224,164,88,.13)}.chip.ok{color:var(--ok);background:rgba(91,191,158,.1)}.chip.over{color:var(--over);background:rgba(232,124,124,.13)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">Button & control system</div>
+  <div class="sub">Midnight theme · every variant, size and state. The single source of truth — build once, reuse everywhere.</div>
+  <div class="tokens">
+    <b>gold</b> linear-gradient(150deg,#e3c884,#a6854a) · text #1a1407 &nbsp;|&nbsp; <b>ghost</b> bg #16181f · border #262a33 &nbsp;|&nbsp; <b>danger</b> #e87c7c<br>
+    <b>radius</b> lg 14 · md 12 · sm 10 · icon 13 · fab 21 &nbsp;|&nbsp; <b>press</b> scale .96 (+brightness on gold) &nbsp;|&nbsp; <b>disabled</b> opacity .40 &nbsp;|&nbsp; <b>focus</b> 2px gold ring, offset 3
+  </div>
+
+  <!-- PRIMARY -->
+  <section>
+    <div class="sh"><span class="n">01</span><h2>Primary — gold</h2><span class="d">The one strong action per screen. Get started · Continue · Save deal.</span></div>
+    <div class="row" style="margin-bottom:26px">
+      <div class="spec"><button class="btn gold lg">Get started</button><span class="cap">Default</span></div>
+      <div class="spec"><button class="btn gold lg is-pressed">Get started</button><span class="cap">Pressed</span></div>
+      <div class="spec"><button class="btn gold lg"><span class="spin"></span>Saving…</button><span class="cap">Loading</span></div>
+      <div class="spec"><button class="btn gold lg" disabled>Continue</button><span class="cap">Disabled</span></div>
+      <div class="spec"><button class="btn gold lg focus">Get started</button><span class="cap">Focused</span></div>
+    </div>
+    <div class="row">
+      <div class="spec"><button class="btn gold lg block">Add your first deal</button><span class="cap">Large · full-width (onboarding CTA)</span></div>
+      <div class="spec"><button class="btn gold md">Save deal</button><span class="cap">Medium</span></div>
+      <div class="spec"><button class="btn gold sm">Confirm</button><span class="cap">Small</span></div>
+    </div>
+  </section>
+
+  <!-- SECONDARY -->
+  <section>
+    <div class="sh"><span class="n">02</span><h2>Secondary — ghost</h2><span class="d">The alternative path. I already have an account · Maybe later · Skip.</span></div>
+    <div class="row">
+      <div class="spec"><button class="btn ghost lg block">I already have an account</button><span class="cap">Default · full-width</span></div>
+      <div class="spec"><button class="btn ghost lg is-pressed">Maybe later</button><span class="cap">Pressed</span></div>
+      <div class="spec"><button class="btn ghost md">How it works</button><span class="cap">Medium</span></div>
+      <div class="spec"><button class="btn ghost md" disabled>Continue</button><span class="cap">Disabled</span></div>
+    </div>
+  </section>
+
+  <!-- TERTIARY -->
+  <section>
+    <div class="sh"><span class="n">03</span><h2>Tertiary — text</h2><span class="d">Inline, low-emphasis. Sign in · + Add milestone · Skip.</span></div>
+    <div class="row" style="align-items:center">
+      <div class="spec"><button class="btn text md">Sign in</button><span class="cap">Default</span></div>
+      <div class="spec"><button class="btn text md">+ Add milestone</button><span class="cap">With glyph</span></div>
+      <div class="spec"><button class="btn text md">Skip to dashboard →</button><span class="cap">Forward</span></div>
+      <div class="spec"><button class="btn text md" disabled>Sign in</button><span class="cap">Disabled</span></div>
+    </div>
+  </section>
+
+  <!-- DESTRUCTIVE -->
+  <section>
+    <div class="sh"><span class="n">04</span><h2>Destructive</h2><span class="d">Deleting a deal, removing a milestone. Always confirm.</span></div>
+    <div class="row">
+      <div class="spec"><button class="btn danger md">Delete deal</button><span class="cap">Outline (default)</span></div>
+      <div class="spec"><button class="btn danger solid md">Delete deal</button><span class="cap">Solid (confirm dialog)</span></div>
+      <div class="spec"><button class="btn danger md is-pressed">Delete deal</button><span class="cap">Pressed</span></div>
+    </div>
+  </section>
+
+  <!-- ICON BUTTONS + FAB -->
+  <section>
+    <div class="sh"><span class="n">05</span><h2>Icon buttons & FAB</h2><span class="d">Navigation and quick actions. 46px hit target; FAB is the gold action.</span></div>
+    <div class="row" style="align-items:center">
+      <div class="spec"><button class="ic ghost">‹</button><span class="cap">Back</span></div>
+      <div class="spec"><button class="ic ghost">+</button><span class="cap">Add</span></div>
+      <div class="spec"><button class="ic ghost">×</button><span class="cap">Close</span></div>
+      <div class="spec"><button class="ic ghost">⋯</button><span class="cap">More</span></div>
+      <div class="spec"><button class="ic ghost circle">‹</button><span class="cap">Circle</span></div>
+      <div class="spec"><button class="ic gold">+</button><span class="cap">Gold icon</span></div>
+      <div class="spec"><button class="fab">+</button><span class="cap">FAB (nav action)</span></div>
+    </div>
+  </section>
+
+  <!-- AUTH -->
+  <section>
+    <div class="sh"><span class="n">06</span><h2>Auth</h2><span class="d">On the Account Setup screen, alongside email. Apple required on iOS if social is offered.</span></div>
+    <div class="row">
+      <div class="spec"><button class="auth apple"> Continue with Apple</button><span class="cap">Apple</span></div>
+      <div class="spec"><button class="auth google"><span class="g"></span> Continue with Google</button><span class="cap">Google</span></div>
+    </div>
+  </section>
+
+  <!-- SEGMENTED -->
+  <section>
+    <div class="sh"><span class="n">07</span><h2>Segmented control</h2><span class="d">Mutually-exclusive choices. Deal volume · This week / month.</span></div>
+    <div class="row">
+      <div class="spec"><div class="seg"><button class="on">1–5</button><button>6–15</button><button>16+</button></div><span class="cap">Three options</span></div>
+      <div class="spec"><div class="seg"><button class="on">This week</button><button>This month</button></div><span class="cap">Two options</span></div>
+    </div>
+  </section>
+
+  <!-- SELECTABLE -->
+  <section>
+    <div class="sh"><span class="n">08</span><h2>Selectable — cards & chips</h2><span class="d">Personalization. Single-select cards, multi-select chips.</span></div>
+    <div class="row" style="margin-bottom:22px">
+      <div class="spec"><div class="opt-card sel"><span class="ico">◍</span><div><div class="t">Solo broker</div><div class="s">Just me, my own deals</div></div><span class="tick"></span></div><span class="cap">Selected</span></div>
+      <div class="spec"><div class="opt-card"><span class="ico">▦</span><div><div class="t">Brokerage</div><div class="s">A team of agents</div></div><span class="tick"></span></div><span class="cap">Unselected</span></div>
+    </div>
+    <div class="row" style="align-items:center">
+      <div class="spec"><span class="opt-chip sel">Emaar</span><span class="cap">Selected</span></div>
+      <div class="spec"><span class="opt-chip sel">Damac</span><span class="cap">Selected</span></div>
+      <div class="spec"><span class="opt-chip">Sobha</span><span class="cap">Unselected</span></div>
+      <div class="spec"><span class="opt-chip">+ Add</span><span class="cap">Add</span></div>
+    </div>
+  </section>
+
+  <!-- STATUS CHIPS -->
+  <section>
+    <div class="sh"><span class="n">09</span><h2>Status chips</h2><span class="d">Read-only state indicators on deals and milestones.</span></div>
+    <div class="row" style="align-items:center">
+      <div class="spec"><span class="chip due">Due in 5 days</span><span class="cap">Due / warning</span></div>
+      <div class="spec"><span class="chip ok">On track</span><span class="cap">On track</span></div>
+      <div class="spec"><span class="chip over">Overdue 6d</span><span class="cap">Overdue</span></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
