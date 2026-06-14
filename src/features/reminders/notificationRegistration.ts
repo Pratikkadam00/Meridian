@@ -25,11 +25,17 @@ export async function registerForReminderPush(remindersRepository: RemindersRepo
     throw new Error("Notification permission was not granted.");
   }
 
-  const projectId = Constants.easConfig?.projectId;
-  const tokenResponse = projectId
-    ? await Notifications.getExpoPushTokenAsync({ projectId })
-    : await Notifications.getExpoPushTokenAsync();
+  // EAS embeds the project id in expoConfig.extra.eas.projectId (and easConfig
+  // on a build). getExpoPushTokenAsync cannot mint a token without it, so fail
+  // with an actionable message instead of a cryptic native error.
+  const projectId =
+    Constants.expoConfig?.extra?.eas?.projectId ?? (Constants.easConfig as { projectId?: string } | undefined)?.projectId;
 
+  if (!projectId) {
+    throw new Error("Push isn't configured yet. Run `eas init` to set the EAS project id, then rebuild.");
+  }
+
+  const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
   const registration = await remindersRepository.registerPushToken(tokenResponse.data);
 
   return registration.message;

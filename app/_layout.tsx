@@ -15,6 +15,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { LogBox } from "react-native";
 
+import { useNotificationObservers } from "@/features/reminders/notificationObservers";
 import { LaunchSplashGate } from "@/features/splash/LaunchSplashGate";
 import { MeridianProviders } from "@/shared/providers/MeridianProviders";
 import { AppErrorFallback } from "@/shared/ui/AppErrorFallback";
@@ -59,6 +60,8 @@ function RootLayout() {
   useEffect(() => {
     startPerformanceJourney("open_to_home");
   }, []);
+
+  useNotificationObservers();
 
   return (
     <MeridianProviders>

@@ -244,7 +244,9 @@ export function computeReminderSendAt(dueDate: string | null, offsetDays: number
     return null;
   }
 
-  const date = new Date(`${dueDate}T09:00:00.000Z`);
+  // Canonical send time is 09:00 Asia/Dubai (UTC+4) = 05:00 UTC — matching the
+  // SQL scheduler exactly so client labels and real send times never drift.
+  const date = new Date(`${dueDate}T09:00:00+04:00`);
 
   if (Number.isNaN(date.getTime())) {
     return null;
