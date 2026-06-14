@@ -159,35 +159,10 @@ type ReminderUpdateBuilder = {
 
 type QueryResult<T> = Promise<{ data: T; error: PostgrestError | null }>;
 
-type InsertSelectBuilder<Insert, Row> = {
-  insert: (values: Insert) => {
-    select: (columns: string) => {
-      single: () => QueryResult<Row>;
-    };
-  };
-};
-
-type InsertOnlyBuilder<Insert> = {
-  insert: (values: Insert | Insert[]) => Promise<{ error: PostgrestError | null }>;
-};
-
-type MilestoneInsertWithId = Database["public"]["Tables"]["milestones"]["Insert"] & {
-  id: string;
-  due_date: string | null;
-};
-
 type ProfileSelectBuilder = {
   select: (columns: string) => {
     eq: (column: "id", value: string) => {
       single: () => QueryResult<ProfileRow>;
-    };
-  };
-};
-
-type DeveloperSelectBuilder = {
-  select: (columns: string) => {
-    ilike: (column: "name", value: string) => {
-      maybeSingle: () => Promise<{ data: { id: string } | null; error: PostgrestError | null }>;
     };
   };
 };
@@ -201,11 +176,31 @@ type FunctionInvokeResponse<T> = {
   error: { message: string } | null;
 };
 
-type ReminderSchedulerRpcClient = MeridianSupabaseClient & {
-  rpc: (
-    fn: "schedule_milestone_reminders",
-    args: Database["public"]["Functions"]["schedule_milestone_reminders"]["Args"],
-  ) => Promise<{ data: Database["public"]["Tables"]["reminders"]["Row"][] | null; error: PostgrestError | null }>;
+type CreateDealWithPlanArgs = {
+  p_deal_id: string | null;
+  p_developer_name: string;
+  p_project_name: string;
+  p_unit: string;
+  p_buyer_name: string;
+  p_buyer_email: string | null;
+  p_total_value_aed: string;
+  p_spa_number: string | null;
+  p_handover_estimate: string | null;
+  p_milestones: Array<{
+    label: string;
+    trigger_type: MilestoneTrigger;
+    trigger_value: string | null;
+    percent: string;
+    amount_aed: string;
+    due_date: string | null;
+    status: MilestoneStatus;
+    source: MilestoneSource;
+  }>;
+  p_document: { name: string; storage_path: string; kind: string } | null;
+};
+
+type CreateDealWithPlanRpcClient = {
+  rpc: (fn: "create_deal_with_plan", args: CreateDealWithPlanArgs) => Promise<{ data: string | null; error: PostgrestError | null }>;
 };
 
 const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -586,72 +581,44 @@ export class SupabaseDealsRepository implements DealsRepository {
   }
 
   async createDeal(input: CreateDealInput): Promise<DealDetail> {
-    const profile = await this.getCurrentProfile();
-    const dealId = input.id ?? createUuid();
-    const developerId = await this.findOrCreateDeveloper(profile.org_id, input.developerName);
-    const deals = this.client.from("deals") as unknown as InsertSelectBuilder<Database["public"]["Tables"]["deals"]["Insert"], { id: string }>;
+    // One transactional RPC inserts the deal, its milestones, schedules
+    // reminders, and records the SPA document — so a partial failure rolls the
+    // whole deal back instead of leaving an orphan deal with no plan.
+    const rpcClient = this.client as unknown as CreateDealWithPlanRpcClient;
+    const { data, error } = await rpcClient.rpc("create_deal_with_plan", {
+      p_deal_id: input.id ?? null,
+      p_developer_name: input.developerName,
+      p_project_name: input.projectName,
+      p_unit: input.unit,
+      p_buyer_name: input.buyerName,
+      p_buyer_email: input.buyerEmail,
+      p_total_value_aed: input.totalValueAed,
+      p_spa_number: input.spaNumber,
+      p_handover_estimate: input.handoverEstimate,
+      p_milestones: input.milestones.map((milestone) => ({
+        label: milestone.label,
+        trigger_type: milestone.triggerType,
+        trigger_value: milestone.triggerValue,
+        percent: milestone.percent,
+        amount_aed: milestone.amountAed,
+        due_date: milestone.dueDate,
+        status: milestone.status,
+        source: milestone.source,
+      })),
+      p_document: input.spaDocument
+        ? { name: input.spaDocument.originalName, storage_path: input.spaDocument.storagePath, kind: "spa" }
+        : null,
+    });
 
-    const { data: dealRow, error: dealError } = await deals
-      .insert({
-        id: dealId,
-        org_id: profile.org_id,
-        created_by: profile.id,
-        developer_id: developerId,
-        project_name: input.projectName,
-        unit: input.unit,
-        buyer_name: input.buyerName,
-        buyer_email: input.buyerEmail,
-        total_value_aed: input.totalValueAed,
-        spa_number: input.spaNumber,
-        handover_estimate: input.handoverEstimate,
-      })
-      .select("id")
-      .single();
-
-    if (dealError) {
-      throw new Error(dealError.message);
+    if (error) {
+      throw new Error(error.message);
     }
 
-    const milestoneRows: MilestoneInsertWithId[] = input.milestones.map((milestone, index) => ({
-      id: createUuid(),
-      org_id: profile.org_id,
-      deal_id: dealRow.id,
-      seq: index + 1,
-      label: milestone.label,
-      trigger_type: milestone.triggerType,
-      trigger_value: milestone.triggerValue,
-      percent: milestone.percent,
-      amount_aed: milestone.amountAed,
-      due_date: milestone.dueDate,
-      status: milestone.status,
-      source: milestone.source,
-    }));
-    const milestones = this.client.from("milestones") as unknown as InsertOnlyBuilder<Database["public"]["Tables"]["milestones"]["Insert"]>;
-
-    const { error: milestoneError } = await milestones.insert(milestoneRows);
-
-    if (milestoneError) {
-      throw new Error(milestoneError.message);
+    if (!data) {
+      throw new Error("Deal could not be created.");
     }
 
-    await this.scheduleMilestoneReminders(milestoneRows);
-
-    if (input.spaDocument) {
-      const documents = this.client.from("documents") as unknown as InsertOnlyBuilder<Database["public"]["Tables"]["documents"]["Insert"]>;
-      const { error: documentError } = await documents.insert({
-        org_id: profile.org_id,
-        deal_id: dealRow.id,
-        name: input.spaDocument.originalName,
-        storage_path: input.spaDocument.storagePath,
-        kind: "spa",
-      });
-
-      if (documentError) {
-        throw new Error(documentError.message);
-      }
-    }
-
-    return this.getDealDetail(dealRow.id);
+    return this.getDealDetail(data);
   }
 
   async extractSpaMilestones(input: SpaExtractionInput): Promise<SpaExtractionResult> {
@@ -735,58 +702,6 @@ export class SupabaseDealsRepository implements DealsRepository {
     }
 
     return data;
-  }
-
-  private async findOrCreateDeveloper(orgId: string, developerNameValue: string): Promise<string | null> {
-    const developerName = developerNameValue.trim();
-
-    if (!developerName) {
-      return null;
-    }
-
-    const developerSelect = this.client.from("developers") as unknown as DeveloperSelectBuilder;
-    const { data: existingDeveloper, error: existingError } = await developerSelect.select("id").ilike("name", developerName).maybeSingle();
-
-    if (existingError) {
-      throw new Error(existingError.message);
-    }
-
-    if (existingDeveloper?.id) {
-      return existingDeveloper.id;
-    }
-
-    const developerInsert = this.client.from("developers") as unknown as InsertSelectBuilder<Database["public"]["Tables"]["developers"]["Insert"], { id: string }>;
-    const { data: createdDeveloper, error: createError } = await developerInsert
-      .insert({
-        org_id: orgId,
-        name: developerName,
-      })
-      .select("id")
-      .single();
-
-    if (createError) {
-      throw new Error(createError.message);
-    }
-
-    return createdDeveloper.id;
-  }
-
-  private async scheduleMilestoneReminders(milestones: MilestoneInsertWithId[]) {
-    const reminderClient = this.client as ReminderSchedulerRpcClient;
-
-    for (const milestone of milestones) {
-      if (!milestone.due_date || milestone.status === "paid") {
-        continue;
-      }
-
-      const { error } = await reminderClient.rpc("schedule_milestone_reminders", {
-        p_milestone_id: milestone.id,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-    }
   }
 
   private async cancelPendingReminderRows(milestoneId: string) {

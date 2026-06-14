@@ -25,7 +25,12 @@ serve(async (request) => {
     return json({ error: "Supabase function environment is not configured." }, 500);
   }
 
-  if (reminderSecret && request.headers.get("x-reminder-secret") !== reminderSecret) {
+  // Fail closed: the dispatcher must be invoked by the scheduler with the secret.
+  if (!reminderSecret) {
+    return json({ error: "Reminder dispatch secret is not configured." }, 500);
+  }
+
+  if (request.headers.get("x-reminder-secret") !== reminderSecret) {
     return json({ error: "Unauthorized." }, 401);
   }
 
@@ -40,17 +45,28 @@ serve(async (request) => {
       persistSession: false,
     },
   });
-  const now = new Date().toISOString();
   const limit = body.data?.limit ?? 50;
+
+  // Atomically claim due rows (pending -> sending, FOR UPDATE SKIP LOCKED) so two
+  // overlapping runs never deliver the same reminder twice.
+  const { data: claimed, error: claimError } = await supabase.rpc("claim_due_reminders", { p_limit: limit });
+
+  if (claimError) {
+    return json({ error: claimError.message }, 500);
+  }
+
+  const claimedIds = (claimed ?? []).map((row) => row.id);
+
+  if (!claimedIds.length) {
+    return json({ inspected: 0, sent: 0, failed: 0, cancelled: 0 }, 200);
+  }
+
   const { data: reminders, error } = await supabase
     .from("reminders")
     .select(
-      "id, org_id, channel, send_at, status, milestones(id, label, amount_aed, due_date, status, deals(id, project_name, unit, buyer_email))",
+      "id, org_id, channel, send_at, status, milestones(id, label, amount_aed, due_date, status, deals(id, project_name, unit, created_by))",
     )
-    .eq("status", "pending")
-    .lte("send_at", now)
-    .order("send_at", { ascending: true })
-    .limit(limit);
+    .in("id", claimedIds);
 
   if (error) {
     return json({ error: error.message }, 500);
@@ -138,10 +154,23 @@ async function sendPushReminder(supabase, orgId, message) {
 
   const result = await response.json().catch(() => null);
   const deliveries = Array.isArray(result?.data) ? result.data : [result?.data].filter(Boolean);
-  const failedTicket = deliveries.find((ticket) => ticket?.status === "error");
 
-  if (failedTicket) {
-    throw new Error(failedTicket.message ?? "Expo push ticket failed.");
+  // Prune tokens Expo reports as unregistered so a dead device can't keep
+  // failing every future reminder for the org.
+  const deadTokens = deliveries
+    .map((ticket, index) => (ticket?.status === "error" && ticket?.details?.error === "DeviceNotRegistered" ? expoTokens[index] : null))
+    .filter(Boolean);
+
+  if (deadTokens.length) {
+    await supabase.from("push_tokens").delete().eq("org_id", orgId).in("token", deadTokens);
+  }
+
+  // Succeed if at least one device received it; only fail when every token failed.
+  const anyDelivered = deliveries.some((ticket) => ticket?.status === "ok");
+
+  if (!anyDelivered) {
+    const firstError = deliveries.find((ticket) => ticket?.status === "error");
+    throw new Error(firstError?.message ?? "All Expo push tickets failed.");
   }
 }
 
@@ -153,13 +182,32 @@ async function sendEmailReminder(supabase, orgId, message) {
     throw new Error("RESEND_API_KEY is not configured.");
   }
 
-  const { data: profiles, error } = await supabase.from("profiles").select("email").eq("org_id", orgId);
+  // Target the broker who owns the deal, not the whole org (avoids emailing
+  // teammates about deals they don't manage); fall back to org members only if
+  // the owner has no email on file.
+  let recipients = [];
 
-  if (error) {
-    throw new Error(error.message);
+  if (message.createdBy) {
+    const { data: owner, error: ownerError } = await supabase.from("profiles").select("email").eq("id", message.createdBy).maybeSingle();
+
+    if (ownerError) {
+      throw new Error(ownerError.message);
+    }
+
+    if (owner?.email) {
+      recipients = [owner.email];
+    }
   }
 
-  const recipients = [...new Set((profiles ?? []).map((profile) => profile.email).filter(Boolean))];
+  if (!recipients.length) {
+    const { data: profiles, error } = await supabase.from("profiles").select("email").eq("org_id", orgId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    recipients = [...new Set((profiles ?? []).map((profile) => profile.email).filter(Boolean))];
+  }
 
   if (!recipients.length) {
     throw new Error("No broker email address found for this organization.");
@@ -213,6 +261,7 @@ function buildReminderMessage(milestone) {
     body: `${amount} is due ${dueDate} for ${dealLabel}.`,
     dealId: deal?.id ?? null,
     milestoneId: milestone.id,
+    createdBy: deal?.created_by ?? null,
   };
 }
 
