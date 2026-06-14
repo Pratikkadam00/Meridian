@@ -78,7 +78,7 @@ export function FloatingNav<TKey extends string>({
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: navBottom }, style]}>
       <View style={styles.shell}>
-        <BlurView intensity={58} tint="dark" blurMethod={Platform.OS === "android" ? "none" : undefined} style={styles.blur}>
+        <BlurView intensity={58} tint="dark" blurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={styles.blur}>
           <Animated.View pointerEvents="none" style={[styles.indicator, indicatorStyle]}>
             <LinearGradient colors={[tokens.colors.navIndicatorStart, tokens.colors.navIndicatorEnd]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={styles.indicatorFill} />
           </Animated.View>

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 
@@ -34,7 +34,7 @@ export default function HomeScreen() {
 
   const deals = dealsQuery.data ?? [];
   const safeActiveIndex = deals.length === 0 ? 0 : Math.min(activeIndex, deals.length - 1);
-  const metrics = getPortfolioMetrics(deals);
+  const metrics = useMemo(() => getPortfolioMetrics(deals), [deals]);
 
   useEffect(() => {
     if (dealsQuery.isLoading) {
@@ -79,6 +79,12 @@ export default function HomeScreen() {
             </Text>{" "}
             {t("home.due")}
           </Text>
+          <Text variant="mono" muted>
+            <Text variant="mono" style={styles.overdueText}>
+              {metrics.overdueLabel}
+            </Text>{" "}
+            {t("home.overdue")}
+          </Text>
         </View>
       </MotiView>
 
@@ -117,6 +123,9 @@ const styles = StyleSheet.create({
   },
   dueText: {
     color: tokens.colors.due,
+  },
+  overdueText: {
+    color: tokens.colors.over,
   },
   error: {
     color: tokens.colors.over,

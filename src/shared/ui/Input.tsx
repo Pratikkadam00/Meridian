@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { StyleSheet, TextInput, type TextInputProps, View } from "react-native";
 
 import { tokens } from "@/shared/theme/tokens";
@@ -8,7 +9,9 @@ type InputProps = TextInputProps & {
   error?: string;
 };
 
-export function Input({ label, error, style, ...props }: InputProps) {
+export function Input({ label, error, style, onFocus, onBlur, accessibilityLabel, ...props }: InputProps) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={styles.field}>
       <Text variant="caption" muted style={styles.label}>
@@ -16,8 +19,17 @@ export function Input({ label, error, style, ...props }: InputProps) {
       </Text>
       <TextInput
         {...props}
+        accessibilityLabel={accessibilityLabel ?? label}
+        onFocus={(event) => {
+          setFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          onBlur?.(event);
+        }}
         placeholderTextColor={tokens.colors.placeholder}
-        style={[styles.input, error && styles.inputError, style]}
+        style={[styles.input, focused && styles.inputFocused, error && styles.inputError, style]}
       />
       {error ? (
         <Text variant="caption" style={styles.error}>
@@ -46,6 +58,9 @@ const styles = StyleSheet.create({
     fontFamily: tokens.font.bodyRegular,
     fontSize: 15,
     paddingHorizontal: tokens.spacing[16],
+  },
+  inputFocused: {
+    borderColor: tokens.colors.accent,
   },
   inputError: {
     borderColor: tokens.colors.over,

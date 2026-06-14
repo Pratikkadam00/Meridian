@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.spacing[32],
   },
   cancel: {
-    minHeight: 32,
+    minHeight: 44,
     alignSelf: "flex-start",
     justifyContent: "center",
     marginBottom: tokens.spacing[12],
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   addMilestone: {
-    minHeight: 32,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.spacing[4],
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     marginBottom: tokens.spacing[12],
   },
   triggerChip: {
-    minHeight: 34,
+    minHeight: 44,
     justifyContent: "center",
     borderWidth: 1,
     borderColor: tokens.colors.line,

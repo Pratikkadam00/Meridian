@@ -27,7 +27,12 @@ describe("dashboard formatting", () => {
     expect(formatAedWhole("1234567.89")).toBe("1,234,568");
   });
 
-  it("rolls up escrow and due portfolio totals", () => {
+  it("rounds the 999.5K boundary up to millions instead of '1000K'", () => {
+    expect(formatAedCompact("999600")).toBe("AED 1.00M");
+    expect(formatAedCompact("999400")).toBe("AED 999K");
+  });
+
+  it("rolls up escrow, due-this-week, and overdue as three separate totals", () => {
     const metrics = getPortfolioMetrics([
       deal({ id: "ok", totalValueAed: "1200000", status: "ok", dueAmountAed: "200000" }),
       deal({ id: "due", totalValueAed: "900000", status: "due", dueAmountAed: "80000" }),
@@ -36,7 +41,8 @@ describe("dashboard formatting", () => {
 
     expect(metrics).toEqual({
       escrowLabel: "AED 3.20M",
-      dueLabel: "AED 130K",
+      dueLabel: "AED 80K",
+      overdueLabel: "AED 50K",
     });
   });
 });
