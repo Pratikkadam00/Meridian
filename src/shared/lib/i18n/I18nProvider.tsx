@@ -1,7 +1,7 @@
 import * as Localization from "expo-localization";
 import i18next, { changeLanguage, use as registerI18nPlugin } from "i18next";
-import { createContext, type PropsWithChildren, useCallback, useContext, useMemo, useState } from "react";
-import { I18nManager } from "react-native";
+import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { I18nManager, Platform } from "react-native";
 import { initReactI18next } from "react-i18next";
 
 import { resources, type SupportedLanguage } from "./translations";
@@ -22,6 +22,33 @@ if (!isInitialized) {
   });
 }
 
+// Native layout direction (flex rows, margins, absolute offsets) only mirrors
+// after the bridge restarts, so a direction change must be followed by a reload.
+async function applyRtlAndReload(shouldBeRTL: boolean) {
+  I18nManager.allowRTL(true);
+
+  if (I18nManager.isRTL === shouldBeRTL) {
+    return;
+  }
+
+  I18nManager.forceRTL(shouldBeRTL);
+
+  try {
+    if (Platform.OS === "web") {
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
+      return;
+    }
+
+    const Updates = await import("expo-updates");
+    await Updates.reloadAsync();
+  } catch {
+    // Reload unavailable (e.g. dev client without expo-updates) — text has
+    // already switched; native mirroring applies on the next app start.
+  }
+}
+
 type I18nControls = {
   language: SupportedLanguage;
   isRTL: boolean;
@@ -33,12 +60,16 @@ const I18nContext = createContext<I18nControls | null>(null);
 export function I18nProvider({ children }: PropsWithChildren) {
   const [language, setLanguageState] = useState<SupportedLanguage>(defaultLanguage);
 
+  // On an Arabic-locale device, force native RTL at startup (otherwise the app
+  // boots Arabic text in an LTR layout).
+  useEffect(() => {
+    void applyRtlAndReload(defaultLanguage === "ar");
+  }, []);
+
   const setLanguage = useCallback((nextLanguage: SupportedLanguage) => {
-    const nextIsRTL = nextLanguage === "ar";
-    I18nManager.allowRTL(true);
-    I18nManager.forceRTL(nextIsRTL);
     setLanguageState(nextLanguage);
     void changeLanguage(nextLanguage);
+    void applyRtlAndReload(nextLanguage === "ar");
   }, []);
 
   const value = useMemo<I18nControls>(

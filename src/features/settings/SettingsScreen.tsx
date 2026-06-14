@@ -1,6 +1,6 @@
 import * as LocalAuthentication from "expo-local-authentication";
 import { router } from "expo-router";
-import { Bell, Fingerprint, LogOut } from "lucide-react-native";
+import { Bell, Fingerprint, Languages, LogOut } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
@@ -8,6 +8,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { registerForReminderPush } from "@/features/reminders/notificationRegistration";
 import { authenticateAppLock, hasBiometricHardware, isBiometricLockEnabled, setBiometricLockEnabled } from "@/features/security/appLock";
 import { useRepositories } from "@/shared/data/RepositoryProvider";
+import { useI18nControls } from "@/shared/lib/i18n/I18nProvider";
 import { captureNonFatalError } from "@/shared/observability/sentry";
 import { tokens } from "@/shared/theme/tokens";
 import { GhostButton, GoldButton } from "@/shared/ui/Button";
@@ -18,6 +19,7 @@ import { Text } from "@/shared/ui/Text";
 export function SettingsScreen() {
   const { profile, signOut } = useAuth();
   const { reminders } = useRepositories();
+  const { language, setLanguage } = useI18nControls();
 
   const [lockEnabled, setLockEnabled] = useState(false);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
@@ -160,6 +162,22 @@ export function SettingsScreen() {
           ) : null}
         </Surface>
 
+        <Surface style={styles.card}>
+          <View style={styles.rowHeader}>
+            <Languages size={18} color={tokens.colors.accent} strokeWidth={2.1} />
+            <Text variant="cardTitle" style={styles.rowTitle}>
+              Language
+            </Text>
+          </View>
+          <Text variant="caption" muted style={styles.rowBody}>
+            Switching to Arabic mirrors the app right-to-left (the app reloads).
+          </Text>
+          <View style={styles.languageRow}>
+            <GhostButton label="English" disabled={busy !== null || language === "en"} onPress={() => setLanguage("en")} style={styles.languageButton} />
+            <GhostButton label="العربية" disabled={busy !== null || language === "ar"} onPress={() => setLanguage("ar")} style={styles.languageButton} />
+          </View>
+        </Surface>
+
         <View style={styles.signOutWrap}>
           <View style={styles.signOutRow}>
             <LogOut size={18} color={tokens.colors.over} strokeWidth={2.1} />
@@ -208,6 +226,13 @@ const styles = StyleSheet.create({
   },
   message: {
     marginTop: tokens.spacing[4],
+  },
+  languageRow: {
+    flexDirection: "row",
+    gap: tokens.spacing[8],
+  },
+  languageButton: {
+    flex: 1,
   },
   signOutWrap: {
     marginTop: tokens.spacing[8],
