@@ -28,6 +28,7 @@ export function IconButton({ icon: Icon, label, variant = "ghost", selected, dis
       focusRadius={radius + tokens.control.focusRingOffset}
       haptic
       outerStyle={style}
+      pressOverlayColor={isGold ? tokens.colors.goldBright : undefined}
       pressScale={tokens.control.iconButton.pressScale}
       pressableStyle={[styles.base, styles[variant], { borderRadius: radius }]}
       selected={selected}

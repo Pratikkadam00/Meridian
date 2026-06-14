@@ -1,12 +1,15 @@
 import * as SplashScreen from "expo-splash-screen";
-import { type PropsWithChildren, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, type PropsWithChildren, useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 
 import { useAuth } from "@/features/auth";
 
-import { AnimatedSplashScreen } from "./AnimatedSplashScreen";
 import { hasSeenLaunchSplash, setLaunchSplashSeen } from "./launchSplashStorage";
+
+// Lazy so the Skia bundle is not on the cold-start critical path (the splash is
+// skipped entirely on subsequent launches).
+const AnimatedSplashScreen = lazy(() => import("./AnimatedSplashScreen").then((module) => ({ default: module.AnimatedSplashScreen })));
 
 type LaunchSplashGateProps = PropsWithChildren<{
   fontsReady: boolean;
@@ -73,7 +76,9 @@ export function LaunchSplashGate({ children, fontsReady }: LaunchSplashGateProps
     <View style={styles.root}>
       {canRenderApp ? children : null}
       {showLaunchSplash ? (
-        <AnimatedSplashScreen />
+        <Suspense fallback={null}>
+          <AnimatedSplashScreen />
+        </Suspense>
       ) : null}
     </View>
   );

@@ -21,6 +21,7 @@ export function Fab({ icon: Icon = Plus, label = "Create", disabled, accessibili
       focusRadius={tokens.control.fab.radius + tokens.control.focusRingOffset}
       haptic
       outerStyle={style}
+      pressOverlayColor={tokens.colors.goldBright}
       pressScale={tokens.control.fab.pressScale}
       pressableStyle={styles.base}
     >

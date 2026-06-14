@@ -85,6 +85,26 @@ exports[`Button renders and fires the gold button action 1`] = `
       ]
     }
   >
+    <View
+      pointerEvents="none"
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {
+            "backgroundColor": "#e3c884",
+          },
+          {
+            "opacity": 0,
+          },
+        ]
+      }
+    />
     <ViewManagerAdapter_ExpoLinearGradient
       colors={
         [

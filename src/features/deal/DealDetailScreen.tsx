@@ -122,21 +122,19 @@ export function DealDetailScreen({ dealId }: DealDetailScreenProps) {
           />
         </MotiView>
 
-        <Animated.View sharedTransitionTag={`deal-card-${deal.id}`}>
-          <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360, delay: 80 }}>
-            <View style={styles.heroBlock}>
-              <Text variant="eyebrow">
-                {t("deal.developerLocation", { developer: deal.developer, location: deal.locationLabel })}
-              </Text>
-              <Text variant="h1" style={styles.title}>
-                {deal.projectName}
-              </Text>
-              <Text variant="body" muted style={styles.metaLine}>
-                {t("deal.buyerHandover", { buyer: deal.buyerName, handover: deal.handoverLabel })}
-              </Text>
-            </View>
-          </MotiView>
-        </Animated.View>
+        <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360, delay: 80 }}>
+          <View style={styles.heroBlock}>
+            <Text variant="eyebrow">
+              {t("deal.developerLocation", { developer: deal.developer, location: deal.locationLabel })}
+            </Text>
+            <Text variant="h1" style={styles.title}>
+              {deal.projectName}
+            </Text>
+            <Text variant="body" muted style={styles.metaLine}>
+              {t("deal.buyerHandover", { buyer: deal.buyerName, handover: deal.handoverLabel })}
+            </Text>
+          </View>
+        </MotiView>
 
         <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360, delay: 160 }}>
           <PaidToDatePanel deal={deal} />

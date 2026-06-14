@@ -63,6 +63,7 @@ export function Button({
       haptic
       hitSlop={hitSlop}
       outerStyle={[block && styles.block, style]}
+      pressOverlayColor={isGold ? tokens.colors.goldBright : undefined}
       pressScale={tokens.control.button.pressScale}
       pressableStyle={[
         styles.base,

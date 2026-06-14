@@ -14,6 +14,8 @@ type PressableScaleProps = Omit<PressableProps, "children" | "style" | "disabled
   haptic?: boolean;
   focusRadius: number;
   pressScale: number;
+  /** When set, a translucent overlay of this color brightens/lifts the control on press. */
+  pressOverlayColor?: string;
   outerStyle?: StyleProp<ViewStyle>;
   pressableStyle?: StyleProp<ViewStyle>;
   onPress?: ((event: GestureResponderEvent) => void) | null;
@@ -27,6 +29,7 @@ export function PressableScale({
   haptic = false,
   focusRadius,
   pressScale,
+  pressOverlayColor,
   outerStyle,
   pressableStyle,
   accessibilityState,
@@ -40,15 +43,21 @@ export function PressableScale({
   const [focused, setFocused] = useState(false);
   const reducedMotion = useReducedMotion();
   const scale = useSharedValue(1);
+  const overlay = useSharedValue(0);
   const blocked = disabled || busy;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: overlay.value * 0.18,
+  }));
+
   function pressIn(event: GestureResponderEvent) {
     if (!blocked && !reducedMotion) {
       scale.value = withTiming(pressScale, { duration: tokens.control.pressDurationMs });
+      overlay.value = withTiming(1, { duration: tokens.control.pressDurationMs });
     }
 
     onPressIn?.(event);
@@ -57,6 +66,7 @@ export function PressableScale({
   function pressOut(event: GestureResponderEvent) {
     if (!blocked && !reducedMotion) {
       scale.value = withTiming(1, { duration: tokens.control.pressDurationMs });
+      overlay.value = withTiming(0, { duration: tokens.control.pressDurationMs });
     }
 
     onPressOut?.(event);
@@ -96,6 +106,7 @@ export function PressableScale({
         style={pressableStyle}
         {...props}
       >
+        {pressOverlayColor ? <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: pressOverlayColor }, overlayStyle]} /> : null}
         {children}
       </Pressable>
     </Animated.View>

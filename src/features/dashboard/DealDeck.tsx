@@ -121,7 +121,7 @@ export function DealDeck({ deals, activeIndex, isLoading, isRTL, onActiveIndexCh
         {thirdDeal && deals.length > 2 ? <DeckShadowCard offset="far" /> : null}
         {nextDeal && deals.length > 1 ? <DeckShadowCard offset="near" /> : null}
         <GestureDetector gesture={gesture}>
-          <Animated.View sharedTransitionTag={`deal-card-${activeDeal.id}`} style={[styles.frontCardShell, frontCardStyle]}>
+          <Animated.View style={[styles.frontCardShell, frontCardStyle]}>
             <DealCard deal={activeDeal} isRTL={isRTL} />
           </Animated.View>
         </GestureDetector>
