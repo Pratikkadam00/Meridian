@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Check, ChevronLeft, ChevronRight, Circle } from "lucide-react-native";
 import { MotiView } from "moti";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 
 import { formatAedCompact, formatAedWhole } from "@/features/dashboard";
@@ -12,7 +12,8 @@ import { markMilestonePaidInDetail, type DealDetail, type DealPaymentMilestone }
 import { useRepositories } from "@/shared/data/RepositoryProvider";
 import { useI18nControls } from "@/shared/lib/i18n/I18nProvider";
 import { tokens } from "@/shared/theme/tokens";
-import { GhostButton } from "@/shared/ui/Button";
+import { Button, GhostButton } from "@/shared/ui/Button";
+import { PressableScale } from "@/shared/ui/PressableScale";
 import { Screen } from "@/shared/ui/Screen";
 import { Text } from "@/shared/ui/Text";
 
@@ -108,12 +109,15 @@ export function DealDetailScreen({ dealId }: DealDetailScreenProps) {
     <Screen contentStyle={[styles.screen, isRTL && styles.rtl]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Back to portfolio" onPress={goBack} style={styles.backButton}>
-            {isRTL ? <ChevronRight size={18} color={tokens.colors.accent} /> : <ChevronLeft size={18} color={tokens.colors.accent} />}
-            <Text variant="caption" style={styles.backText}>
-              Portfolio
-            </Text>
-          </Pressable>
+          <Button
+            variant="text"
+            size="md"
+            label="Portfolio"
+            accessibilityLabel="Back to portfolio"
+            onPress={goBack}
+            leftIcon={isRTL ? <ChevronRight size={18} color={tokens.colors.accent} /> : <ChevronLeft size={18} color={tokens.colors.accent} />}
+            style={styles.backButton}
+          />
         </MotiView>
 
         <Animated.View sharedTransitionTag={`deal-card-${deal.id}`}>
@@ -243,11 +247,19 @@ function PaymentMilestoneRow({ milestone, isLast, isPopping, isPending, canMarkP
           AED <Text variant="mono">{formatAedWhole(milestone.amountAed)}</Text>
         </Text>
         {canMarkPaid ? (
-          <Pressable accessibilityRole="button" accessibilityLabel={`Mark ${milestone.label} paid`} disabled={isPending} onPress={() => onMarkPaid(milestone.id)} style={({ pressed }) => [styles.markPaidButton, pressed && styles.markPaidPressed]}>
+          <PressableScale
+            accessibilityLabel={`Mark ${milestone.label} paid`}
+            disabled={isPending}
+            haptic
+            focusRadius={tokens.radius.pill}
+            pressScale={tokens.control.button.pressScale}
+            pressableStyle={styles.markPaidButton}
+            onPress={() => onMarkPaid(milestone.id)}
+          >
             <Text variant="mono" style={styles.markPaidText}>
               {isPending ? "Saving" : `${milestone.status === "overdue" ? "Overdue" : `Due ${milestone.dueDateLabel}`} - Mark paid`}
             </Text>
-          </Pressable>
+          </PressableScale>
         ) : (
           <Text variant="mono" style={[styles.milestoneStatus, isDone && styles.statusDone, milestone.status === "overdue" && styles.statusOver, milestone.status === "due" && styles.statusDue]}>
             {isDone ? `Paid - ${milestone.paidDateLabel ?? "Done"}` : milestone.status === "overdue" ? `Overdue - ${milestone.dueDateLabel}` : milestone.status === "due" ? `Due ${milestone.dueDateLabel}` : milestone.dueDateLabel}
@@ -279,16 +291,8 @@ const styles = StyleSheet.create({
     marginBottom: tokens.spacing[22],
   },
   backButton: {
-    minHeight: 32,
-    flexDirection: "row",
-    alignItems: "center",
     alignSelf: "flex-start",
-    gap: tokens.spacing[4],
     marginBottom: tokens.spacing[12],
-  },
-  backText: {
-    color: tokens.colors.accent,
-    fontFamily: tokens.font.bodySemi,
   },
   heroBlock: {
     marginBottom: tokens.spacing[16],
@@ -407,14 +411,11 @@ const styles = StyleSheet.create({
     color: tokens.colors.over,
   },
   markPaidButton: {
-    minHeight: 28,
+    minHeight: 44,
     justifyContent: "center",
     borderRadius: tokens.radius.pill,
     backgroundColor: tokens.colors.dueTint,
     paddingHorizontal: tokens.spacing[12],
-  },
-  markPaidPressed: {
-    transform: [{ scale: 0.96 }],
   },
   markPaidText: {
     color: tokens.colors.due,

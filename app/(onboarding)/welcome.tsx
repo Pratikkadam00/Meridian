@@ -1,13 +1,15 @@
 import { Link } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
+import { ScrollView, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 
 import { OnboardingStepView, useOnboardingStepTracking } from "@/features/onboarding";
 import { useI18nControls } from "@/shared/lib/i18n/I18nProvider";
 import { tokens } from "@/shared/theme/tokens";
 import { GoldButton, GhostButton } from "@/shared/ui/Button";
+import { PressableScale } from "@/shared/ui/PressableScale";
 import { Screen } from "@/shared/ui/Screen";
+import { SegmentedControl } from "@/shared/ui/SelectableControls";
 import { Text } from "@/shared/ui/Text";
 
 const beats = [
@@ -75,38 +77,27 @@ export default function WelcomeScreen() {
         <View style={styles.footer}>
           <View style={styles.beatDots}>
             {beats.map((beat, index) => (
-              <Pressable
+              <PressableScale
                 key={beat.title}
-                accessibilityRole="button"
                 accessibilityLabel={`Show value ${index + 1}`}
-                accessibilityState={{ selected: activeBeat === index }}
+                selected={activeBeat === index}
+                focusRadius={tokens.radius.pill}
+                pressScale={tokens.control.optionChip.pressScale}
                 onPress={() => goToBeat(index)}
-                style={[styles.beatDot, activeBeat === index && styles.beatDotOn]}
-              />
+                pressableStyle={[styles.beatDot, activeBeat === index && styles.beatDotOn]}
+              >
+                <View />
+              </PressableScale>
             ))}
           </View>
-          <View style={styles.languageRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: language === "en" }}
-              onPress={() => setLanguage("en")}
-              style={[styles.languageButton, language === "en" && styles.languageButtonOn]}
-            >
-              <Text variant="caption" style={language === "en" && styles.languageTextOn}>
-                English
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: language === "ar" }}
-              onPress={() => setLanguage("ar")}
-              style={[styles.languageButton, language === "ar" && styles.languageButtonOn]}
-            >
-              <Text variant="caption" style={language === "ar" && styles.languageTextOn}>
-                Arabic
-              </Text>
-            </Pressable>
-          </View>
+          <SegmentedControl
+            options={["en", "ar"] as const}
+            labels={{ en: "English", ar: "العربية" }}
+            value={language}
+            onChange={setLanguage}
+            accessibilityLabel="Language"
+            style={styles.languageRow}
+          />
           <Link href="/account" asChild>
             <GoldButton label={t("welcome.primaryCta")} />
           </Link>
@@ -163,25 +154,6 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colors.accent,
   },
   languageRow: {
-    flexDirection: "row",
-    gap: tokens.spacing[8],
     marginBottom: tokens.spacing[4],
-  },
-  languageButton: {
-    minHeight: 44,
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.field,
-    backgroundColor: tokens.colors.panel,
-  },
-  languageButtonOn: {
-    borderColor: tokens.colors.accent,
-    backgroundColor: tokens.colors.goldTint,
-  },
-  languageTextOn: {
-    color: tokens.colors.ink,
   },
 });

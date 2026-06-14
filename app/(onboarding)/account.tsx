@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { z } from "zod";
 
 import { useAuth } from "@/features/auth";
@@ -10,6 +10,7 @@ import { OnboardingStepView, persistOnboardingStep, useOnboardingStepTracking } 
 import { useI18nControls } from "@/shared/lib/i18n/I18nProvider";
 import { tokens } from "@/shared/theme/tokens";
 import { GoldButton, GhostButton } from "@/shared/ui/Button";
+import { PressableScale } from "@/shared/ui/PressableScale";
 import { Input } from "@/shared/ui/Input";
 import { ProgressDots } from "@/shared/ui/ProgressDots";
 import { Screen } from "@/shared/ui/Screen";
@@ -192,14 +193,19 @@ export default function AccountScreen() {
         />
 
         <Link href={{ pathname: "/account", params: { mode: isSignIn ? "sign-up" : "sign-in" } }} asChild>
-          <Pressable accessibilityRole="link" style={styles.switchMode}>
+          <PressableScale
+            accessibilityLabel={isSignIn ? "Create a workspace" : "Sign in"}
+            focusRadius={tokens.radius.field}
+            pressScale={tokens.control.button.pressScale}
+            pressableStyle={styles.switchMode}
+          >
             <Text variant="caption" muted>
               {isSignIn ? "Need a workspace? " : "Already have an account? "}
               <Text variant="caption" style={styles.switchModeAccent}>
                 {isSignIn ? "Create one" : "Sign in"}
               </Text>
             </Text>
-          </Pressable>
+          </PressableScale>
         </Link>
 
         <Link href="/welcome" asChild>

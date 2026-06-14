@@ -4,13 +4,13 @@ import * as Haptics from "expo-haptics";
 import { BellRing, MessageCircle, RefreshCw } from "lucide-react-native";
 import { MotiView } from "moti";
 import { useCallback, useState } from "react";
-import { Linking, Pressable, StyleSheet, View, type TextStyle, type ViewStyle } from "react-native";
+import { Linking, StyleSheet, View, type TextStyle, type ViewStyle } from "react-native";
 
 import type { ReminderItem, ReminderUrgency } from "@/shared/data/repositories/remindersRepository";
 import { useRepositories } from "@/shared/data/RepositoryProvider";
 import { useFeatureFlag } from "@/shared/featureFlags/FeatureFlagProvider";
 import { tokens } from "@/shared/theme/tokens";
-import { GoldButton, GhostButton } from "@/shared/ui/Button";
+import { Button, GoldButton, GhostButton } from "@/shared/ui/Button";
 import { Screen } from "@/shared/ui/Screen";
 import { Text } from "@/shared/ui/Text";
 
@@ -230,12 +230,15 @@ function ReminderRow({ reminder, whatsappEnabled, onShare }: { reminder: Reminde
           </Text>
         </View>
         {whatsappEnabled ? (
-          <Pressable accessibilityRole="button" accessibilityLabel={`Share ${reminder.milestoneLabel} to WhatsApp`} onPress={() => onShare(reminder)} style={({ pressed }) => [styles.whatsappButton, pressed && styles.pressed]}>
-            <MessageCircle size={15} color={tokens.colors.goldInk} strokeWidth={2.4} />
-            <Text variant="caption" style={styles.whatsappText}>
-              Share to WhatsApp
-            </Text>
-          </Pressable>
+          <Button
+            variant="gold"
+            size="sm"
+            label="Share to WhatsApp"
+            accessibilityLabel={`Share ${reminder.milestoneLabel} to WhatsApp`}
+            onPress={() => onShare(reminder)}
+            leftIcon={<MessageCircle size={15} color={tokens.colors.goldInk} strokeWidth={2.4} />}
+            style={styles.whatsappButton}
+          />
         ) : null}
       </View>
     </View>
@@ -403,19 +406,8 @@ const styles = StyleSheet.create({
     marginTop: tokens.spacing[12],
   },
   whatsappButton: {
-    minHeight: 36,
     alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[8],
-    borderRadius: 12,
-    backgroundColor: tokens.colors.goldBright,
-    paddingHorizontal: tokens.spacing[12],
     marginTop: tokens.spacing[16],
-  },
-  whatsappText: {
-    color: tokens.colors.goldInk,
-    fontFamily: tokens.font.bodySemi,
   },
   centerState: {
     minHeight: 160,
@@ -450,8 +442,5 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.56,
-  },
-  pressed: {
-    transform: [{ scale: 0.97 }],
   },
 });

@@ -5,7 +5,7 @@ import { FileUp, Plus, Trash2 } from "lucide-react-native";
 import { MotiView } from "moti";
 import { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 
 import type { DealDetail, NewDealDocumentInput, SpaExtractionInput } from "@/shared/data/repositories/dealsRepository";
 import { useRepositories } from "@/shared/data/RepositoryProvider";
@@ -13,9 +13,12 @@ import type { MilestoneTrigger } from "@/shared/data/database.types";
 import { useFeatureFlag } from "@/shared/featureFlags/FeatureFlagProvider";
 import { captureNonFatalError, finishPerformanceJourney, startPerformanceJourney } from "@/shared/observability/sentry";
 import { tokens } from "@/shared/theme/tokens";
-import { GoldButton } from "@/shared/ui/Button";
+import { Button, GoldButton } from "@/shared/ui/Button";
+import { IconButton } from "@/shared/ui/IconButton";
 import { Input } from "@/shared/ui/Input";
+import { PressableScale } from "@/shared/ui/PressableScale";
 import { Screen } from "@/shared/ui/Screen";
+import { OptionChip } from "@/shared/ui/SelectableControls";
 import { Text } from "@/shared/ui/Text";
 
 import { defaultMilestone, milestoneInputToForm, newDealFormSchema, toCreateDealInput, type NewDealFormValues } from "./newDealSchema";
@@ -143,11 +146,7 @@ export function NewDealScreen() {
     <Screen contentStyle={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Cancel new deal" onPress={() => router.back()} style={styles.cancel}>
-            <Text variant="caption" style={styles.cancelText}>
-              Cancel
-            </Text>
-          </Pressable>
+          <Button variant="text" size="md" label="Cancel" accessibilityLabel="Cancel new deal" onPress={() => router.back()} style={styles.cancel} />
           <Text variant="h1" style={styles.title}>
             New deal
           </Text>
@@ -155,7 +154,15 @@ export function NewDealScreen() {
 
         {aiSpaExtractionEnabled ? (
           <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360, delay: 80 }}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Upload SPA PDF" disabled={isExtracting} onPress={pickSpaPdf} style={({ pressed }) => [styles.dropZone, pressed && styles.pressed, isExtracting && styles.disabled]}>
+            <PressableScale
+              accessibilityLabel="Upload SPA PDF"
+              disabled={isExtracting}
+              haptic
+              focusRadius={16 + tokens.control.focusRingOffset}
+              pressScale={tokens.control.button.pressScale}
+              pressableStyle={styles.dropZone}
+              onPress={pickSpaPdf}
+            >
               <FileUp size={24} color={tokens.colors.goldBright} strokeWidth={2.1} />
               <Text variant="cardTitle" style={styles.dropTitle}>
                 Drop the SPA PDF
@@ -163,7 +170,7 @@ export function NewDealScreen() {
               <Text variant="caption" muted style={styles.dropText}>
                 {isExtracting ? "Reading payment plan" : "We'll read it and fill the payment plan"}
               </Text>
-            </Pressable>
+            </PressableScale>
             {aiMessage ? (
               <Text variant="caption" style={[styles.aiMessage, extractSpaMutation.isError && styles.errorText]}>
                 {aiMessage}
@@ -200,12 +207,14 @@ export function NewDealScreen() {
             <Text variant="cardTitle" style={styles.planTitle}>
               Payment plan
             </Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Add milestone" onPress={addMilestone} style={({ pressed }) => [styles.addMilestone, pressed && styles.pressed]}>
-              <Plus size={15} color={tokens.colors.accent} strokeWidth={2.3} />
-              <Text variant="caption" style={styles.addText}>
-                Add milestone
-              </Text>
-            </Pressable>
+            <Button
+              variant="text"
+              size="sm"
+              label="Add milestone"
+              accessibilityLabel="Add milestone"
+              onPress={addMilestone}
+              leftIcon={<Plus size={15} color={tokens.colors.accent} strokeWidth={2.3} />}
+            />
           </View>
 
           <View style={styles.milestones}>
@@ -251,29 +260,20 @@ function MilestoneEditor({ control, index, canRemove, onRemove, onTriggerTypeCha
           name={`milestones.${index}.label`}
           render={({ field, fieldState }) => <Input label="Label" placeholder="Down payment" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
         />
-        {canRemove ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Remove milestone" onPress={onRemove} style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}>
-            <Trash2 size={17} color={tokens.colors.over} strokeWidth={2.1} />
-          </Pressable>
-        ) : null}
+        {canRemove ? <IconButton icon={Trash2} label="Remove milestone" onPress={onRemove} style={styles.removeButton} /> : null}
       </View>
 
-      <View style={styles.triggerRow}>
-        {triggerOptions.map((option) => (
-          <Controller
-            key={option.value}
-            control={control}
-            name={`milestones.${index}.triggerType`}
-            render={({ field }) => (
-              <Pressable accessibilityRole="button" accessibilityState={{ selected: field.value === option.value }} onPress={() => onTriggerTypeChange(option.value)} style={({ pressed }) => [styles.triggerChip, field.value === option.value && styles.triggerChipSelected, pressed && styles.pressed]}>
-                <Text variant="caption" style={[styles.triggerChipText, field.value === option.value && styles.triggerChipTextSelected]}>
-                  {option.label}
-                </Text>
-              </Pressable>
-            )}
-          />
-        ))}
-      </View>
+      <Controller
+        control={control}
+        name={`milestones.${index}.triggerType`}
+        render={({ field }) => (
+          <View style={styles.triggerRow}>
+            {triggerOptions.map((option) => (
+              <OptionChip key={option.value} label={option.label} selected={field.value === option.value} onPress={() => onTriggerTypeChange(option.value)} />
+            ))}
+          </View>
+        )}
+      />
 
       <View style={styles.milestoneGrid}>
         <Controller
@@ -309,14 +309,8 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.spacing[32],
   },
   cancel: {
-    minHeight: 44,
     alignSelf: "flex-start",
-    justifyContent: "center",
     marginBottom: tokens.spacing[12],
-  },
-  cancelText: {
-    color: tokens.colors.accent,
-    fontFamily: tokens.font.bodySemi,
   },
   title: {
     marginBottom: tokens.spacing[16],
@@ -356,16 +350,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
   },
-  addMilestone: {
-    minHeight: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[4],
-  },
-  addText: {
-    color: tokens.colors.accent,
-    fontFamily: tokens.font.bodySemi,
-  },
   milestones: {
     gap: tokens.spacing[8],
   },
@@ -391,40 +375,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   removeButton: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.field,
-    backgroundColor: tokens.colors.panel2,
-    marginTop: 25,
+    marginTop: 22,
   },
   triggerRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: tokens.spacing[8],
     marginBottom: tokens.spacing[12],
-  },
-  triggerChip: {
-    minHeight: 44,
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: 11,
-    backgroundColor: tokens.colors.panel2,
-    paddingHorizontal: tokens.spacing[12],
-  },
-  triggerChipSelected: {
-    borderColor: tokens.colors.accent,
-    backgroundColor: tokens.colors.goldTint,
-  },
-  triggerChipText: {
-    color: tokens.colors.muted,
-  },
-  triggerChipTextSelected: {
-    color: tokens.colors.ink,
   },
   saveButton: {
     marginTop: tokens.spacing[16],
@@ -435,8 +392,5 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.56,
-  },
-  pressed: {
-    transform: [{ scale: 0.98 }],
   },
 });

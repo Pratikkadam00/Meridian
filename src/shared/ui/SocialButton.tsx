@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 
 import { tokens } from "@/shared/theme/tokens";
 
@@ -30,7 +30,7 @@ export function SocialButton({ provider, label, loading = false, disabled, acces
       pressableStyle={[styles.base, isApple ? styles.apple : styles.google]}
     >
       <View style={styles.content}>
-        <SocialMark provider={provider} />
+        {loading ? <ActivityIndicator color={isApple ? tokens.colors.authAppleText : tokens.colors.ink} size="small" /> : <SocialMark provider={provider} />}
         <Text variant="caption" style={[styles.label, isApple && styles.appleLabel]}>
           {loading ? "Connecting" : resolvedLabel}
         </Text>
