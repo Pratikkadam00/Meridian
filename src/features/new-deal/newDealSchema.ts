@@ -47,13 +47,53 @@ export const newDealMilestoneFormSchema = z.object({
   source: sourceSchema,
 });
 
-export const newDealFormSchema = z.object({
-  project: z.string().trim().min(2, "Project is required."),
-  developer: z.string().trim().min(2, "Developer is required."),
-  buyerName: z.string().trim().min(2, "Buyer name is required."),
-  totalValueAed: decimalInputSchema("Total value is required."),
-  milestones: z.array(newDealMilestoneFormSchema).min(1, "Add at least one milestone."),
-});
+export const newDealFormSchema = z
+  .object({
+    project: z.string().trim().min(2, "Project is required."),
+    developer: z.string().trim().min(2, "Developer is required."),
+    buyerName: z.string().trim().min(2, "Buyer name is required."),
+    totalValueAed: decimalInputSchema("Total value is required."),
+    milestones: z.array(newDealMilestoneFormSchema).min(1, "Add at least one milestone."),
+  })
+  .superRefine((values, ctx) => {
+    // A payment plan that doesn't add up to the deal value is the exact error
+    // this app exists to prevent. Validate the totals (skip if any field is
+    // unparseable — those get their own field-level errors first).
+    let total: Decimal;
+    let amountSum = new Decimal(0);
+    let percentSum = new Decimal(0);
+
+    try {
+      total = new Decimal(stripNumber(values.totalValueAed));
+      for (const milestone of values.milestones) {
+        amountSum = amountSum.plus(new Decimal(stripNumber(milestone.amountAed)));
+        percentSum = percentSum.plus(new Decimal(stripNumber(milestone.percent)));
+      }
+    } catch {
+      return;
+    }
+
+    if (total.lessThanOrEqualTo(0)) {
+      return;
+    }
+
+    const amountTolerance = Decimal.max(1, total.times(0.005));
+    if (amountSum.minus(total).abs().greaterThan(amountTolerance)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["milestones"],
+        message: `Milestone amounts (AED ${amountSum.toFixed(0)}) must add up to the total value (AED ${total.toFixed(0)}).`,
+      });
+    }
+
+    if (percentSum.minus(100).abs().greaterThan(1)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["milestones"],
+        message: `Milestone percentages total ${percentSum.toDecimalPlaces(2).toString()}% — they should add up to 100%.`,
+      });
+    }
+  });
 
 export type NewDealFormValues = z.infer<typeof newDealFormSchema>;
 

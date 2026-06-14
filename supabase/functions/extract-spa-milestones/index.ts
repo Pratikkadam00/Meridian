@@ -3,12 +3,24 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.108.1";
 import { z } from "npm:zod@4.4.3";
 
+const numericString = (max: number, message: string) =>
+  z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .refine((value) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) && parsed > 0 && parsed <= max;
+    }, message);
+
 const milestoneSchema = z.object({
   label: z.string().min(1),
   triggerType: z.enum(["booking", "registration", "construction", "handover"]),
   triggerValue: z.string().nullable(),
-  percent: z.string().regex(/^\d+(\.\d+)?$/),
-  amountAed: z.string().regex(/^\d+(\.\d+)?$/),
+  // Mirror the DB CHECK (percent 0-100) and a sane AED ceiling for numeric(14,2)
+  // so a mis-read (e.g. an amount parsed as a percent) is rejected here instead
+  // of failing with a raw constraint error after the broker confirms.
+  percent: numericString(100, "percent must be between 0 and 100"),
+  amountAed: numericString(999_999_999_999, "amount is out of range"),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   status: z.enum(["due", "upcoming", "overdue", "paid"]),
   source: z.literal("spa_extracted"),
@@ -24,6 +36,7 @@ const responseSchema = z.object({
 });
 
 serve(async (request) => {
+ try {
   if (request.method !== "POST") {
     return json({ error: "Method not allowed." }, 405);
   }
@@ -116,9 +129,17 @@ serve(async (request) => {
     return json({ error: "SPA extraction failed. Continue with manual entry." }, 502);
   }
 
-  const anthropicPayload = await anthropicResponse.json();
-  const text = extractText(anthropicPayload);
-  const parsedJson = parseJsonObject(text);
+  // extractText / parseJsonObject can throw on a non-JSON or tool_use response;
+  // degrade to the friendly 422 (manual entry) instead of a bare 500.
+  let parsedJson: unknown;
+  try {
+    const anthropicPayload = await anthropicResponse.json();
+    const text = extractText(anthropicPayload);
+    parsedJson = parseJsonObject(text);
+  } catch (_error) {
+    return json({ error: "SPA extraction returned an invalid payment plan. Continue with manual entry." }, 422);
+  }
+
   const parsed = responseSchema.safeParse(parsedJson);
 
   if (!parsed.success) {
@@ -126,6 +147,9 @@ serve(async (request) => {
   }
 
   return json(parsed.data);
+ } catch (_error) {
+   return json({ error: "SPA extraction failed. Continue with manual entry." }, 500);
+ }
 });
 
 function json(body: unknown, status = 200) {

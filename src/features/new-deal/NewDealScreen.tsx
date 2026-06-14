@@ -98,28 +98,33 @@ export function NewDealScreen() {
   async function pickSpaPdf() {
     setAiMessage(null);
 
-    const DocumentPicker = await import("expo-document-picker");
-    const result = await DocumentPicker.getDocumentAsync({
-      copyToCacheDirectory: true,
-      type: "application/pdf",
-    });
+    try {
+      const DocumentPicker = await import("expo-document-picker");
+      const result = await DocumentPicker.getDocumentAsync({
+        copyToCacheDirectory: true,
+        type: "application/pdf",
+      });
 
-    if (result.canceled) {
-      return;
+      if (result.canceled) {
+        return;
+      }
+
+      const asset = result.assets[0];
+
+      if (!asset?.uri) {
+        setAiMessage("Could not read the selected PDF. You can still enter the plan manually.");
+        return;
+      }
+
+      extractSpaMutation.mutate({
+        fileUri: asset.uri,
+        fileName: asset.name || "SPA.pdf",
+        mimeType: asset.mimeType || "application/pdf",
+      });
+    } catch (error) {
+      captureNonFatalError("spa_document_picker_failed", error, { surface: "new_deal" });
+      setAiMessage("Could not open the file picker. You can still enter the plan manually.");
     }
-
-    const asset = result.assets[0];
-
-    if (!asset?.uri) {
-      setAiMessage("Could not read the selected PDF. You can still enter the plan manually.");
-      return;
-    }
-
-    extractSpaMutation.mutate({
-      fileUri: asset.uri,
-      fileName: asset.name || "SPA.pdf",
-      mimeType: asset.mimeType || "application/pdf",
-    });
   }
 
   function addMilestone() {

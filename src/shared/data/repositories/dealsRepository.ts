@@ -1,4 +1,5 @@
 import { Decimal } from "decimal.js";
+import { z } from "zod";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 import type { Database, MilestoneSource, MilestoneStatus, MilestoneTrigger, ProfileRow } from "../database.types";
@@ -81,6 +82,30 @@ export type SpaExtractionResult = {
   storagePath: string;
   milestones: NewDealMilestoneInput[];
 };
+
+// Re-validate the edge function's response on the client too: it is a separate
+// trust boundary (the function could be redeployed/proxied), and BUILD §3
+// requires Zod at every boundary incl. AI output.
+const extractedMilestoneSchema = z.object({
+  label: z.string().min(1),
+  triggerType: z.enum(["booking", "registration", "construction", "handover"]),
+  triggerValue: z.string().nullable(),
+  percent: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .refine((value) => Number(value) > 0 && Number(value) <= 100, "percent must be 0-100"),
+  amountAed: z.string().regex(/^\d+(\.\d+)?$/),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+  status: z.enum(["due", "upcoming", "overdue", "paid"]),
+  source: z.literal("spa_extracted"),
+});
+
+const spaExtractionResponseSchema = z.object({
+  milestones: z.array(extractedMilestoneSchema).min(1),
+});
 
 export type DealsRepository = {
   listDashboardDeals: () => Promise<DashboardDeal[]>;
@@ -655,14 +680,16 @@ export class SupabaseDealsRepository implements DealsRepository {
       throw new Error(error.message);
     }
 
-    if (!data?.milestones.length) {
-      throw new Error("No payment milestones were found in the SPA.");
+    const parsed = spaExtractionResponseSchema.safeParse(data);
+
+    if (!parsed.success) {
+      throw new Error("The AI returned an invalid payment plan. Enter the milestones manually.");
     }
 
     return {
       dealId,
       storagePath,
-      milestones: data.milestones,
+      milestones: parsed.data.milestones,
     };
   }
 
