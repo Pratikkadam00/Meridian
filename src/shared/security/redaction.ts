@@ -1,8 +1,11 @@
-const sensitiveKeyPattern = /(access|refresh|id)?_?token|secret|password|authorization|email|buyer|full_?name|phone/i;
+const sensitiveKeyPattern = /(access|refresh|id)?_?token|secret|password|authorization|apikey|api_key|email|buyer|full_?name|phone/i;
 const emailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const bearerPattern = /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi;
 const jwtPattern = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g;
 const expoPushTokenPattern = /\bExponentPushToken\[[^\]]+\]/g;
+// apikey/token credentials carried in a query string or header value.
+const queryCredentialPattern = /([?&](?:apikey|api_key|access_token|token|key)=)[^&\s"']+/gi;
+const headerCredentialPattern = /\b(authorization|apikey|api[_-]?key)\s*[:=]\s*["']?[^,\s"']+/gi;
 
 let consoleRedactionInstalled = false;
 
@@ -11,7 +14,9 @@ export function redactText(value: string) {
     .replace(emailPattern, "[redacted-email]")
     .replace(bearerPattern, "Bearer [redacted-token]")
     .replace(jwtPattern, "[redacted-jwt]")
-    .replace(expoPushTokenPattern, "ExponentPushToken[redacted]");
+    .replace(expoPushTokenPattern, "ExponentPushToken[redacted]")
+    .replace(queryCredentialPattern, "$1[redacted]")
+    .replace(headerCredentialPattern, "$1=[redacted]");
 }
 
 export function redactUnknown(value: unknown): unknown {

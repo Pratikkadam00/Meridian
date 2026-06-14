@@ -28,6 +28,7 @@ jest.mock("@sentry/react-native", () => ({
   init: jest.fn(),
   wrap: (component: unknown) => component,
   captureException: jest.fn(),
+  addBreadcrumb: jest.fn(),
   startInactiveSpan: jest.fn(() => ({
     end: jest.fn(),
     setAttributes: jest.fn(),
