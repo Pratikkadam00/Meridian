@@ -3,6 +3,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 
 import type { Database, MilestoneSource, MilestoneStatus, MilestoneTrigger, ProfileRow } from "../database.types";
 import type { MeridianSupabaseClient } from "../supabaseClient";
+import { deriveMilestoneStatus } from "@/shared/lib/date/milestoneStatus";
 
 export type DashboardDeal = {
   id: string;
@@ -104,7 +105,7 @@ type SupabaseMilestoneRow = {
 
 type SupabaseDeveloperRelation = { name: string } | { name: string }[] | null;
 
-type SupabaseDealDetailRow = {
+export type SupabaseDealDetailRow = {
   id: string;
   project_name: string;
   unit: string;
@@ -854,20 +855,26 @@ export function createUuid() {
   });
 }
 
-function mapSupabaseDetail(row: SupabaseDealDetailRow): DealDetail {
+export function mapSupabaseDetail(row: SupabaseDealDetailRow): DealDetail {
   const milestones = (row.milestones ?? [])
-    .map((milestone) => ({
-      id: milestone.id,
-      sequence: milestone.seq,
-      label: milestone.label,
-      triggerType: milestone.trigger_type,
-      triggerLabel: milestone.trigger_value ?? triggerLabelForType(milestone.trigger_type),
-      percent: formatPercent(milestone.percent),
-      amountAed: milestone.amount_aed,
-      dueDateLabel: formatDateLabel(milestone.due_date),
-      paidDateLabel: milestone.paid_date ? formatDateLabel(milestone.paid_date) : null,
-      status: milestone.status,
-    }))
+    .map((milestone) => {
+      const isPaid = milestone.status === "paid" || Boolean(milestone.paid_date);
+
+      return {
+        id: milestone.id,
+        sequence: milestone.seq,
+        label: milestone.label,
+        triggerType: milestone.trigger_type,
+        triggerLabel: milestone.trigger_value ?? triggerLabelForType(milestone.trigger_type),
+        percent: formatPercent(milestone.percent),
+        amountAed: milestone.amount_aed,
+        dueDateLabel: formatDateLabel(milestone.due_date),
+        paidDateLabel: milestone.paid_date ? formatDateLabel(milestone.paid_date) : null,
+        // Re-derive against today so a passed due date never keeps showing as
+        // "upcoming" — the stored column can be stale until the nightly recompute.
+        status: deriveMilestoneStatus(milestone.due_date, isPaid),
+      };
+    })
     .sort((left, right) => left.sequence - right.sequence);
 
   return withMilestoneRollup({
@@ -890,7 +897,7 @@ function mapSupabaseDetail(row: SupabaseDealDetailRow): DealDetail {
   });
 }
 
-function withMilestoneRollup(deal: DealDetail): DealDetail {
+export function withMilestoneRollup(deal: DealDetail): DealDetail {
   const paidToDate = sumMilestones(deal.milestones, (milestone) => milestone.status === "paid");
   const dueAmount = sumMilestones(deal.milestones, (milestone) => milestone.status === "due" || milestone.status === "overdue");
   const nextMilestone = deal.milestones.find((milestone) => milestone.status === "due" || milestone.status === "overdue" || milestone.status === "upcoming");
@@ -959,7 +966,7 @@ function createDealDetailFromInput(input: CreateDealInput, dealId: string): Deal
       amountAed: milestone.amountAed,
       dueDateLabel: formatDateLabel(milestone.dueDate),
       paidDateLabel: null,
-      status: milestone.status,
+      status: deriveMilestoneStatus(milestone.dueDate, milestone.status === "paid"),
     })),
   });
 }
@@ -968,7 +975,7 @@ function sumMilestones(milestones: DealPaymentMilestone[], predicate: (milestone
   return milestones.reduce((sum, milestone) => (predicate(milestone) ? sum.plus(milestone.amountAed || "0") : sum), new Decimal(0));
 }
 
-function paidPercent(totalValueAed: string, paidToDate: Decimal) {
+export function paidPercent(totalValueAed: string, paidToDate: Decimal) {
   const total = new Decimal(totalValueAed || "0");
 
   if (total.lessThanOrEqualTo(0)) {

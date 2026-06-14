@@ -2,6 +2,7 @@ import { Decimal } from "decimal.js";
 import { z } from "zod";
 
 import type { CreateDealInput, NewDealDocumentInput, NewDealMilestoneInput } from "@/shared/data/repositories/dealsRepository";
+import { deriveMilestoneStatus } from "@/shared/lib/date/milestoneStatus";
 
 const triggerTypeSchema = z.enum(["booking", "registration", "construction", "handover"]);
 const sourceSchema = z.enum(["manual", "spa_extracted"]);
@@ -100,7 +101,7 @@ export function toCreateDealInput(values: NewDealFormValues, spaDocument: (NewDe
       percent: normalizeDecimal(milestone.percent),
       amountAed: normalizeDecimal(milestone.amountAed),
       dueDate: cleanOptional(milestone.dueDate),
-      status: statusForDueDate(milestone.dueDate),
+      status: deriveMilestoneStatus(cleanOptional(milestone.dueDate), false),
       source: milestone.source,
     })),
     spaDocument: spaDocument
@@ -130,29 +131,6 @@ function splitProjectAndUnit(project: string) {
     projectName: project.trim(),
     unit: "Unit TBD",
   };
-}
-
-function statusForDueDate(value: string) {
-  const dueDate = cleanOptional(value);
-
-  if (!dueDate) {
-    return "upcoming" as const;
-  }
-
-  const today = new Date();
-  const current = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  const due = new Date(`${dueDate}T00:00:00`).getTime();
-  const daysUntilDue = Math.ceil((due - current) / 86_400_000);
-
-  if (daysUntilDue < 0) {
-    return "overdue" as const;
-  }
-
-  if (daysUntilDue <= 7) {
-    return "due" as const;
-  }
-
-  return "upcoming" as const;
 }
 
 function cleanOptional(value: string | undefined) {
