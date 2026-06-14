@@ -51,8 +51,14 @@
       ],
       "@sentry/react-native"
     ],
+    "extra": {
+      "eas": {
+        "projectId": "c6a933d0-0f29-47e5-b883-e8d2fc2ca1df"
+      }
+    },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/c6a933d0-0f29-47e5-b883-e8d2fc2ca1df"
     },
     "experiments": {
       "typedRoutes": true
