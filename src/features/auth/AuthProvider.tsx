@@ -14,6 +14,7 @@ type AuthContextValue = {
   signIn: (input: SignInInput) => Promise<Session>;
   signUp: (input: SignUpWithWorkspaceInput) => Promise<SignUpWithWorkspaceResult>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -145,6 +146,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, [auth]);
 
+  const deleteAccount = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await auth.deleteAccount();
+      setSession(null);
+      setProfile(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [auth]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
@@ -155,8 +167,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       signIn,
       signUp,
       signOut,
+      deleteAccount,
     }),
-    [isLoading, isSupabaseConfigured, profile, refreshProfile, session, signIn, signOut, signUp],
+    [deleteAccount, isLoading, isSupabaseConfigured, profile, refreshProfile, session, signIn, signOut, signUp],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

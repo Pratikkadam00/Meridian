@@ -28,6 +28,7 @@ export type AuthRepository = {
   signInWithEmail: (input: SignInInput) => Promise<Session>;
   signUpWithWorkspace: (input: SignUpWithWorkspaceInput) => Promise<SignUpWithWorkspaceResult>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   onAuthStateChange: (listener: (session: Session | null) => void) => () => void;
 };
 
@@ -139,6 +140,15 @@ export class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
+  async deleteAccount() {
+    // Server-side erasure (storage + org cascade + auth user), then local sign-out.
+    const { error } = await this.client.functions.invoke("delete-account", { body: {} });
+    if (error) {
+      throw new Error(error.message);
+    }
+    await this.client.auth.signOut().catch(() => undefined);
+  }
+
   onAuthStateChange(listener: (session: Session | null) => void) {
     const { data } = this.client.auth.onAuthStateChange((_event, session) => {
       listener(session);
@@ -173,6 +183,10 @@ export class PreviewAuthRepository implements AuthRepository {
   }
 
   async signOut() {
+    this.store.signOut();
+  }
+
+  async deleteAccount() {
     this.store.signOut();
   }
 

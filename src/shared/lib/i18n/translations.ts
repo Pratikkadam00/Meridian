@@ -79,7 +79,8 @@ export const resources = {
         "switchPromptSignIn": "Already have an account? ",
         "switchActionSignUp": "Create one",
         "switchActionSignIn": "Sign in",
-        "back": "Back"
+        "back": "Back",
+        "ageTerms": "I am 18 or older and accept the Terms & Privacy Policy."
       },
       "personalization": {
         "eyebrow": "Step 3",
@@ -253,7 +254,14 @@ export const resources = {
         "languageArabic": "العربية",
         "signOutRowLabel": "Sign out of this device",
         "signingOut": "Signing out",
-        "signOut": "Sign out"
+        "signOut": "Sign out",
+        "dangerTitle": "Delete account",
+        "dangerBody": "Permanently delete your workspace and all its data — deals, milestones, documents, and reminders. This cannot be undone.",
+        "deleteConfirmBody": "This permanently erases your account and all data. Tap again to confirm.",
+        "deleteAccount": "Delete account & data",
+        "deleteConfirm": "Tap again to permanently delete",
+        "deleting": "Deleting",
+        "deleteError": "Could not delete the account. Please try again or contact support."
       }
     }
   },
@@ -337,7 +345,8 @@ export const resources = {
         "switchPromptSignIn": "لديك حساب بالفعل؟ ",
         "switchActionSignUp": "أنشئ واحدة",
         "switchActionSignIn": "سجّل الدخول",
-        "back": "رجوع"
+        "back": "رجوع",
+        "ageTerms": "عمري 18 عاماً أو أكثر وأوافق على الشروط وسياسة الخصوصية."
       },
       "personalization": {
         "eyebrow": "الخطوة 3",
@@ -511,7 +520,14 @@ export const resources = {
         "languageArabic": "العربية",
         "signOutRowLabel": "تسجيل الخروج من هذا الجهاز",
         "signingOut": "جارٍ تسجيل الخروج",
-        "signOut": "تسجيل الخروج"
+        "signOut": "تسجيل الخروج",
+        "dangerTitle": "حذف الحساب",
+        "dangerBody": "احذف مساحة عملك وجميع بياناتها نهائياً — الصفقات والمراحل والمستندات والتنبيهات. لا يمكن التراجع عن هذا الإجراء.",
+        "deleteConfirmBody": "سيؤدي هذا إلى محو حسابك وجميع البيانات نهائياً. اضغط مرة أخرى للتأكيد.",
+        "deleteAccount": "حذف الحساب والبيانات",
+        "deleteConfirm": "اضغط مرة أخرى للحذف النهائي",
+        "deleting": "جارٍ الحذف",
+        "deleteError": "تعذّر حذف الحساب. يرجى المحاولة مرة أخرى أو التواصل مع الدعم."
       }
     }
   }

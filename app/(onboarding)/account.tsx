@@ -42,6 +42,7 @@ export default function AccountScreen() {
   const { isRTL } = useI18nControls();
   const { t } = useTranslation();
   const [formMessage, setFormMessage] = useState<string | null>(null);
+  const [accepted, setAccepted] = useState(false);
   useOnboardingStepTracking("account", 2);
 
   const schema = useMemo(
@@ -194,11 +195,28 @@ export default function AccountScreen() {
           </Text>
         ) : null}
 
+        {!isSignIn ? (
+          <PressableScale
+            accessibilityLabel={t("account.ageTerms")}
+            accessibilityState={{ checked: accepted }}
+            selected={accepted}
+            focusRadius={tokens.radius.field}
+            pressScale={tokens.control.optionChip.pressScale}
+            pressableStyle={styles.ageRow}
+            onPress={() => setAccepted((value) => !value)}
+          >
+            <View style={[styles.ageBox, accepted && styles.ageBoxChecked]} />
+            <Text variant="caption" muted style={styles.ageText}>
+              {t("account.ageTerms")}
+            </Text>
+          </PressableScale>
+        ) : null}
+
         <GoldButton
           label={isSignIn ? t("account.submitSignIn") : t("account.submitSignUp")}
-          disabled={!isConfigured || isSubmitting || isLoading}
+          disabled={!isConfigured || isSubmitting || isLoading || (!isSignIn && !accepted)}
           onPress={submit}
-          style={(!isConfigured || isSubmitting || isLoading) && styles.disabled}
+          style={(!isConfigured || isSubmitting || isLoading || (!isSignIn && !accepted)) && styles.disabled}
         />
 
         <Link href={{ pathname: "/account", params: { mode: isSignIn ? "sign-up" : "sign-in" } }} asChild>
@@ -258,5 +276,27 @@ const styles = StyleSheet.create({
   },
   switchModeAccent: {
     color: tokens.colors.accent,
+  },
+  ageRow: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    paddingVertical: tokens.spacing[4],
+  },
+  ageBox: {
+    width: 22,
+    height: 22,
+    borderWidth: 1,
+    borderColor: tokens.colors.line,
+    borderRadius: 6,
+    backgroundColor: tokens.colors.panel,
+  },
+  ageBoxChecked: {
+    borderColor: tokens.colors.accent,
+    backgroundColor: tokens.colors.accent,
+  },
+  ageText: {
+    flex: 1,
   },
 });

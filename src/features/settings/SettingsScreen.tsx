@@ -1,6 +1,6 @@
 import * as LocalAuthentication from "expo-local-authentication";
 import { router } from "expo-router";
-import { Bell, Fingerprint, Languages, LogOut } from "lucide-react-native";
+import { Bell, Fingerprint, Languages, LogOut, Trash2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -12,21 +12,23 @@ import { useRepositories } from "@/shared/data/RepositoryProvider";
 import { useI18nControls } from "@/shared/lib/i18n/I18nProvider";
 import { captureNonFatalError } from "@/shared/observability/sentry";
 import { tokens } from "@/shared/theme/tokens";
-import { GhostButton, GoldButton } from "@/shared/ui/Button";
+import { Button, GhostButton, GoldButton } from "@/shared/ui/Button";
 import { Screen } from "@/shared/ui/Screen";
 import { Surface } from "@/shared/ui/Surface";
 import { Text } from "@/shared/ui/Text";
 
 export function SettingsScreen() {
   const { t } = useTranslation();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, deleteAccount } = useAuth();
   const { reminders } = useRepositories();
   const { language, setLanguage } = useI18nControls();
 
   const [lockEnabled, setLockEnabled] = useState(false);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [lockMessage, setLockMessage] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"push" | "lock" | "signout" | null>(null);
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busy, setBusy] = useState<"push" | "lock" | "signout" | "delete" | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -96,6 +98,27 @@ export function SettingsScreen() {
       router.replace("/welcome");
     } catch (error) {
       captureNonFatalError("settings_sign_out_failed", error, { surface: "settings" });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    // Two-tap confirm before an irreversible erasure.
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      setDeleteMessage(null);
+      return;
+    }
+
+    setBusy("delete");
+    try {
+      await deleteAccount();
+      router.replace("/welcome");
+    } catch (error) {
+      captureNonFatalError("settings_delete_account_failed", error, { surface: "settings" });
+      setDeleteMessage(error instanceof Error ? error.message : t("settings.deleteError"));
+      setConfirmDelete(false);
     } finally {
       setBusy(null);
     }
@@ -189,6 +212,30 @@ export function SettingsScreen() {
           </View>
           <GoldButton label={busy === "signout" ? t("settings.signingOut") : t("settings.signOut")} disabled={busy !== null} onPress={handleSignOut} />
         </View>
+
+        <Surface style={styles.card}>
+          <View style={styles.rowHeader}>
+            <Trash2 size={18} color={tokens.colors.over} strokeWidth={2.1} />
+            <Text variant="cardTitle" style={[styles.rowTitle, styles.dangerTitle]}>
+              {t("settings.dangerTitle")}
+            </Text>
+          </View>
+          <Text variant="caption" muted style={styles.rowBody}>
+            {confirmDelete ? t("settings.deleteConfirmBody") : t("settings.dangerBody")}
+          </Text>
+          <Button
+            variant="danger"
+            block
+            label={busy === "delete" ? t("settings.deleting") : confirmDelete ? t("settings.deleteConfirm") : t("settings.deleteAccount")}
+            disabled={busy !== null}
+            onPress={handleDeleteAccount}
+          />
+          {deleteMessage ? (
+            <Text variant="caption" style={styles.dangerTitle}>
+              {deleteMessage}
+            </Text>
+          ) : null}
+        </Surface>
       </ScrollView>
     </Screen>
   );
@@ -222,6 +269,9 @@ const styles = StyleSheet.create({
   rowTitle: {
     fontSize: 15,
     lineHeight: 20,
+  },
+  dangerTitle: {
+    color: tokens.colors.over,
   },
   rowBody: {
     marginBottom: tokens.spacing[4],
