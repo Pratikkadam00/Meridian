@@ -2,7 +2,7 @@
 
 > **Living document.** Current state of the Meridian app: what's built, how it works, what's deployed, and what's pending. Updated whenever something changes.
 >
-> **Last updated:** 2026-06-15 · **Repo:** https://github.com/Pratikkadam00/Meridian · **Commits:** 22
+> **Last updated:** 2026-06-15 · **Repo:** https://github.com/Pratikkadam00/Meridian · **Commits:** 24
 
 ---
 
@@ -152,6 +152,7 @@ Per-step analytics, back always works, step persists across app kill (resume), `
 - **Phase 11** (`docs/security-hardening.md`): real device check (`expo-device` emulator detection) + honest posture (each control labelled enforced vs pending); cert-pinning + Play Integrity/App Attest are scaffolded with exact activation steps (SPKI hashes + server attestation) — **not** faked.
 - **Biometric app-lock** enforced at launch (fail-open so users aren't bricked).
 - **AI:** see §6 (constitution + injection-tested).
+- **Legal & compliance** (`docs/compliance.md`): B2B/adults (low children-risk, 18+ acceptance gated at sign-up); **UAE PDPL** + the broker-as-controller / Meridian-as-processor model for SPA buyer data; **in-app account & data deletion** (PDPL erasure + Apple/Google requirement) — a `delete-account` edge fn that erases storage + org cascade + auth user, **verified live**. Privacy policy / Terms / DPA + lawyer review are pending (see §12).
 
 ---
 
@@ -174,6 +175,8 @@ Per-step analytics, back always works, step persists across app kill (resume), `
 - ⏳ **iOS build** — needs an Apple Developer account.
 - ⏳ **Type-gen** — `supabase gen types typescript` to remove the two remaining `update` builder casts.
 - ⏳ Full Maestro E2E + visual snapshots running in CI (configured; needs a Maestro Cloud key).
+- ⏳ **Compliance:** Privacy Policy + Terms + DPA drafted & **lawyer-reviewed**; orphaned-SPA storage sweep; data export (portability); cross-border-transfer basis; app-store data-safety forms (`docs/compliance.md` §11).
+- ⏳ **Marketing website** — spec'd in `meridian-WEBSITE.md`; build on request (own Next.js project at `D:\projects\meridian-website`).
 
 ---
 
@@ -203,6 +206,8 @@ Per-step analytics, back always works, step persists across app kill (resume), `
 | 20 | `f62cab5` | feature: SPA AI extraction via Groq, verified live |
 | 21 | `a8cee80` | security: AI constitution + prompt-injection hardening |
 | 22 | `4eea0b5` | test: AI extraction battery (9/9 — legit pass, attacks blocked) |
+| 23 | `7ceb50a` | docs: add worklog.md |
+| 24 | `aa30bb4` | compliance: account/data deletion (PDPL), 18+ acceptance, compliance.md |
 
 ---
 
