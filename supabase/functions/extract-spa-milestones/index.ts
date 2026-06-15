@@ -94,6 +94,17 @@ serve(async (request) => {
     }
 
     const serviceClient = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    // Rate limit per org (Groq tokens cost money) — 30 extractions / hour.
+    const { data: allowed, error: rlError } = await serviceClient.rpc("consume_rate_limit", {
+      p_bucket: `ai_extract:${orgId}`,
+      p_max: 30,
+      p_window: "1 hour",
+    });
+    if (!rlError && allowed === false) {
+      return json({ error: "Too many SPA extractions right now. Try again later, or enter the plan manually." }, 429);
+    }
+
     const { data: spaFile, error: downloadError } = await serviceClient.storage.from("deal-documents").download(body.data.storagePath);
 
     if (downloadError || !spaFile) {

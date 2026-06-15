@@ -2,7 +2,7 @@
 
 > **Living document.** Current state of the Meridian app: what's built, how it works, what's deployed, and what's pending. Updated whenever something changes.
 >
-> **Last updated:** 2026-06-15 · **Repo:** https://github.com/Pratikkadam00/Meridian · **Commits:** 24
+> **Last updated:** 2026-06-15 · **Repo:** https://github.com/Pratikkadam00/Meridian · **Commits:** 26
 
 ---
 
@@ -153,6 +153,7 @@ Per-step analytics, back always works, step persists across app kill (resume), `
 - **Biometric app-lock** enforced at launch (fail-open so users aren't bricked).
 - **AI:** see §6 (constitution + injection-tested).
 - **Legal & compliance** (`docs/compliance.md`): B2B/adults (low children-risk, 18+ acceptance gated at sign-up); **UAE PDPL** + the broker-as-controller / Meridian-as-processor model for SPA buyer data; **in-app account & data deletion** (PDPL erasure + Apple/Google requirement) — a `delete-account` edge fn that erases storage + org cascade + auth user, **verified live**. Privacy policy / Terms / DPA + lawyer review are pending (see §12).
+- **API security & rate limiting** (`docs/api-security.md`): **no secrets in the client** (the anon key is public by design; RLS is the boundary; service-role/Groq keys are server-only with a boot guard); per-endpoint JWT/secret auth + path authz; **server-side rate limiting** via `consume_rate_limit` wired into the AI extractor (**30/org/hour → 429**, verified live) and reusable for any expensive endpoint; auth brute-force handled by Supabase + platform DDoS notes; the website security plan (Server-Action waitlist, honeypot, per-IP limit, security headers, anon-only).
 
 ---
 
@@ -208,6 +209,8 @@ Per-step analytics, back always works, step persists across app kill (resume), `
 | 22 | `4eea0b5` | test: AI extraction battery (9/9 — legit pass, attacks blocked) |
 | 23 | `7ceb50a` | docs: add worklog.md |
 | 24 | `aa30bb4` | compliance: account/data deletion (PDPL), 18+ acceptance, compliance.md |
+| 25 | `9e8e95b` | docs: update worklog (compliance) |
+| 26 | `—` | security: server-side rate limiting + api-security.md |
 
 ---
 
