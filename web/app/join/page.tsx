@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function Join() {
   return (
     <main>
-      <section className="page-hero" style={{ padding: "84px 0 104px" }}>
+      <section className="page-hero" style={{ paddingBottom: "104px" }}>
         <div className="grid-bg" />
         <div className="grain" />
         <Nav />

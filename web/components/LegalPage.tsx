@@ -14,10 +14,10 @@ export default function LegalPage({
 }) {
   return (
     <main>
-      <section className="page-hero" style={{ padding: "70px 0 50px" }}>
+      <section className="page-hero" style={{ paddingBottom: "50px" }}>
         <div className="grid-bg" />
         <Nav />
-        <div className="wrap" style={{ paddingTop: "30px" }}>
+        <div className="wrap">
           <div className="eyebrow lime mono">Legal</div>
           <h1>{title}</h1>
           <p className="updated">Last updated {updated}</p>
@@ -25,7 +25,9 @@ export default function LegalPage({
       </section>
 
       <section className="section deep">
-        <div className="wrap prose">{children}</div>
+        <div className="wrap">
+          <div className="prose">{children}</div>
+        </div>
       </section>
 
       <Footer />

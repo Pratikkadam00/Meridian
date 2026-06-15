@@ -12,7 +12,7 @@ export default function Home() {
         <div className="grain" />
         <Nav />
         <div className="stage">
-          <div className="wrap copy">
+          <div className="copy">
             <div className="eyebrow lime mono">For Dubai off-plan brokers</div>
             <h1>
               <span className="ln">

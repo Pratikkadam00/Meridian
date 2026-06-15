@@ -35,7 +35,7 @@ export default function HowItWorks() {
         <div className="grid-bg" />
         <div className="grain" />
         <Nav />
-        <div className="wrap" style={{ paddingTop: "40px" }}>
+        <div className="wrap">
           <div className="eyebrow lime mono">How it works</div>
           <h1>
             From the SPA to <span className="it">the next payment.</span>

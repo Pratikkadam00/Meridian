@@ -111,6 +111,9 @@ button {
 .nav {
   position: relative;
   z-index: 6;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -407,16 +410,17 @@ button {
   position: relative;
   z-index: 4;
   flex: 1;
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  align-items: center;
-  gap: 30px;
-}
-.stage .wrap {
   width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 44px;
+  display: grid;
+  grid-template-columns: 1.04fr 0.96fr;
+  align-items: center;
+  gap: 36px;
 }
 .copy {
-  padding: 20px 0 40px;
+  padding: 8px 0 40px;
 }
 .hero h1 {
   font-family: var(--disp);
@@ -572,6 +576,9 @@ button {
 .hero .foot {
   position: relative;
   z-index: 4;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -974,9 +981,14 @@ button {
 .page-hero {
   position: relative;
   overflow: hidden;
-  padding: 80px 0 70px;
+  padding: 0 0 72px;
   background: radial-gradient(60% 80% at 75% 20%, rgba(200, 169, 106, 0.12), transparent 60%),
     linear-gradient(158deg, #0d2519, #0f2a1f 60%, #0a2016);
+}
+/* space between the (top-aligned) nav and the page heading, consistent on
+   every interior page */
+.page-hero > .wrap {
+  padding-top: 44px;
 }
 .page-hero h1 {
   font-family: var(--disp);
@@ -1112,9 +1124,11 @@ button {
 }
 
 /* prose / legal */
+/* narrow reading column, but LEFT-aligned inside the page wrap so the body
+   lines up under the page heading (not centered/indented) */
 .prose {
   max-width: 760px;
-  margin: 0 auto;
+  margin: 0;
   color: var(--bone);
 }
 .prose .legal-flag {
@@ -1175,6 +1189,24 @@ button {
 }
 .section.deep {
   background: var(--green-deep);
+}
+
+/* small screens — trim the generous 44px gutter so content breathes on phones */
+@media (max-width: 600px) {
+  .wrap,
+  .stage,
+  .hero .foot,
+  .nav {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+  .mobile-nav {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+  .h-big {
+    font-size: clamp(34px, 11vw, 56px);
+  }
 }
 
 /* reduced motion — neutralize every entrance/loop */
