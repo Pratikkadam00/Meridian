@@ -1,0 +1,293 @@
+<!-- @dsCard group="Meridian App" viewport="980x900" name="Meridian app — interactive" subtitle="Click-through: onboarding, what's-due home, AI SPA review, deal detail, comms, settings · EN/AR · light/dark" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meridian — App UI Kit</title>
+<link rel="stylesheet" href="../../styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: #E8E6E0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(20,32,30,.05) 1px, transparent 0); background-size: 22px 22px;
+    padding: 40px; box-sizing: border-box; }
+  #root { display: flex; align-items: flex-start; justify-content: center; gap: 36px; width: 100%; }
+
+  /* ---- screen picker rail ---- */
+  .rail { width: 210px; flex: none; position: sticky; top: 40px; display: flex; flex-direction: column; gap: 18px; }
+  .rail .brand { display: flex; align-items: center; gap: 10px; }
+  .rail .brand b { font: 700 20px var(--font-display); letter-spacing: -.02em; color: var(--ink-900); }
+  .rail-grp { display: flex; flex-direction: column; gap: 4px; }
+  .rail-grp h4 { font: 600 10px var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: #8A8378; margin: 6px 2px 3px; }
+  .rail button { display: flex; align-items: center; gap: 9px; border: none; background: transparent; cursor: pointer;
+    font: 500 13.5px var(--font-ui); color: var(--ink-700); padding: 7px 10px; border-radius: 9px; text-align: left; transition: background .15s, color .15s; }
+  .rail button:hover { background: rgba(20,32,30,.06); }
+  .rail button.on { background: var(--jade-500); color: #fff; }
+  .rail .toggles { display: flex; gap: 8px; }
+  .rail .toggles button { flex: 1; justify-content: center; background: #fff; border: 1px solid var(--line-200); padding: 8px; }
+  .rail .toggles button.on { background: var(--ink-900); color: #fff; border-color: var(--ink-900); }
+
+  /* ---- phone ---- */
+  .device { width: 390px; height: 820px; flex: none; position: relative; overflow: hidden;
+    background: var(--bg-app); border-radius: 46px; box-shadow: 0 2px 4px rgba(0,0,0,.1), 0 30px 70px rgba(20,32,30,.28), inset 0 0 0 2px rgba(0,0,0,.06);
+    border: 9px solid #11100E; display: flex; flex-direction: column; }
+  .statusbar { height: 46px; flex: none; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 30px; font: 600 14px var(--font-ui); color: var(--text-primary); position: relative; z-index: 5; }
+  .statusbar .notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 96px; height: 26px; background: #11100E; border-radius: 16px; }
+  .statusbar .si { display: flex; gap: 6px; align-items: center; }
+  .stage { flex: 1; min-height: 0; position: relative; display: flex; }
+
+  /* ---- generic screen scaffold ---- */
+  .screen { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100%; }
+  .screen.pad { padding: 0 var(--screen-pad) calc(var(--screen-pad) + 4px); }
+  .scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 12px var(--screen-pad) 18px; display: flex; flex-direction: column; gap: var(--sp-3); -webkit-overflow-scrolling: touch; }
+  .scroll::-webkit-scrollbar { width: 0; }
+  .eyebrow { font: 600 var(--fs-micro)/1 var(--font-ui); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--text-tertiary); }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* ---- home ---- */
+  .home-top { display: flex; align-items: center; justify-content: space-between; padding: 6px var(--screen-pad) 8px; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--jade-100); color: var(--jade-700);
+    font: 600 13px var(--font-ui); display: inline-flex; align-items: center; justify-content: center; }
+  .hero-chip { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--font-ui); color: var(--text-on-ink);
+    background: rgba(255,255,255,.1); padding: 5px 10px; border-radius: 999px; }
+  .hero-chip i { width: 7px; height: 7px; border-radius: 50%; }
+  .mini-line { position: relative; height: 2px; background: rgba(255,255,255,.22); margin: 18px 2px 2px; border-radius: 2px; }
+  .mini-done { position: absolute; inset-inline-start: 0; top: 0; height: 2px; width: 38%; background: var(--jade-300); border-radius: 2px; }
+  .mini-now { position: absolute; top: -4px; inset-inline-start: 38%; width: 10px; height: 10px; border-radius: 50%; background: var(--amber-500); border: 2px solid var(--jade-800); transform: translateX(-50%); }
+  .risk-banner { display: flex; align-items: center; gap: 11px; width: 100%; text-align: start; cursor: pointer;
+    background: var(--critical-bg); border: 1px solid var(--critical); color: var(--critical-text); border-radius: var(--r-md); padding: 12px 13px;
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 7px, rgba(163,35,27,.06) 7px, rgba(163,35,27,.06) 14px); }
+  .risk-ico { flex: none; width: 34px; height: 34px; border-radius: 9px; background: var(--critical); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 2px 2px; margin-top: 4px; }
+  .due-act { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: none; background: var(--surface-card);
+    cursor: pointer; font: 600 13px var(--font-ui); color: var(--action); padding: 12px; transition: background .15s; }
+  .due-act:hover { background: var(--jade-50); }
+  .guardrail { display: flex; gap: 9px; align-items: flex-start; background: var(--surface-sunk); border-radius: var(--r-md); padding: 12px 13px;
+    font: 400 12.5px/1.45 var(--font-ui); color: var(--text-secondary); margin-top: 10px; }
+  .guardrail svg { color: var(--upcoming); flex: none; margin-top: 1px; }
+
+  /* ---- deal detail ---- */
+  .id-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-top: 12px; }
+  .id-grid > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .id-grid span { font: 500 11px var(--font-ui); color: var(--text-tertiary); }
+  .id-grid b { font: 600 14px var(--font-ui); color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; }
+  .id-grid b.mono { font-family: var(--font-mono); font-size: 13px; }
+  .paid-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface-sunk); border-radius: var(--r-sm); }
+  .paid-row span { font: 400 13px var(--font-ui); color: var(--text-secondary); }
+  .paid-row b { font: 600 14px var(--font-ui); }
+
+  /* ---- SPA review ---- */
+  .pdf-pane { flex: none; background: var(--surface-sunk); border-bottom: 1px solid var(--border-hair); padding: 12px var(--screen-pad); }
+  .pdf { background: #fff; border: 1px solid var(--line-200); border-radius: var(--r-sm); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .pdf-bar { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-bottom: 1px solid var(--line-100);
+    font: 500 11px var(--font-ui); color: var(--text-secondary); }
+  .pdf-bar span { display: inline-flex; align-items: center; gap: 5px; }
+  .pdf-page { position: relative; padding: 12px 14px; height: 168px; overflow: hidden; }
+  .pdf-h { font: 700 11px var(--font-mono); letter-spacing: .04em; color: var(--ink-900); margin-bottom: 7px; }
+  .pdf-l { font: 400 9.5px/1.55 var(--font-mono); color: #4a544f; margin: 0; }
+  .pdf-l b { color: var(--ink-900); }
+  .pdf-hl { position: absolute; background: rgba(224,146,47,.22); border: 1.5px solid var(--amber-500); border-radius: 3px;
+    transition: top .28s var(--ease-out), inset-inline-start .28s var(--ease-out), width .28s var(--ease-out), height .28s var(--ease-out); pointer-events: none; }
+  .pdf-action { display: flex; align-items: center; gap: 12px; margin-top: 10px; background: var(--surface-card); border: 1.5px solid var(--border-strong);
+    border-radius: var(--r-md); padding: 10px 12px; }
+  .pdf-action.is-low { border-color: var(--overdue); background: var(--overdue-bg); color: var(--overdue-text); }
+  .pdf-action-val { font: 600 15px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pdf-action.is-low .pdf-action-val { color: var(--overdue-text); }
+  .confirmed-chip { display: inline-flex; align-items: center; gap: 5px; font: 600 12px var(--font-ui); color: var(--paid-text); background: var(--paid-bg); padding: 7px 11px; border-radius: 999px; flex: none; }
+  .validate { display: flex; align-items: center; gap: 9px; font: 500 13px var(--font-ui); padding: 11px 13px; border-radius: var(--r-md); }
+  .validate.ok { background: var(--paid-bg); color: var(--paid-text); }
+  .validate.ok b { font-weight: 700; }
+  .review-hint { font: 400 13px/1.45 var(--font-ui); color: var(--text-secondary); margin: 12px 2px; }
+  .cta-bar { position: absolute; inset-inline: 0; bottom: 0; padding: 14px var(--screen-pad) calc(16px + var(--safe-bottom));
+    background: linear-gradient(to top, var(--bg-app) 62%, transparent); }
+
+  /* ---- upload ---- */
+  .dropzone { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; cursor: pointer;
+    background: var(--surface-card); border: 2px dashed var(--border-strong); border-radius: var(--r-xl); padding: 36px 20px; transition: border-color .2s, background .2s; }
+  .dropzone:hover { border-color: var(--action); background: var(--jade-50); }
+  .dz-ico { width: 64px; height: 64px; border-radius: 50%; background: var(--jade-50); color: var(--action); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+  .upload-note { display: flex; gap: 8px; align-items: flex-start; font: 400 12.5px/1.4 var(--font-ui); color: var(--text-secondary); }
+  .upload-note svg { color: var(--action); flex: none; margin-top: 1px; }
+  .scan-doc { position: relative; width: 92px; height: 110px; border-radius: 12px; background: var(--surface-card); border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .scan-beam { position: absolute; inset-inline: 0; height: 30px; background: linear-gradient(to bottom, transparent, rgba(224,146,47,.4), transparent); animation: scan 1.4s var(--ease-mid) infinite; }
+  @keyframes scan { 0%{top:-30px} 100%{top:110px} }
+
+  /* ---- auth / onboarding ---- */
+  .screen.auth { background: var(--jade-800); padding: 0 var(--screen-pad) var(--screen-pad); justify-content: space-between; }
+  .auth-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; }
+  .auth-card { background: var(--surface-card); border-radius: var(--r-2xl); padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-lg); }
+  .auth-or { position: relative; text-align: center; }
+  .auth-or::before { content: ''; position: absolute; top: 50%; inset-inline: 0; height: 1px; background: var(--border-hair); }
+  .auth-or span { position: relative; background: var(--surface-card); padding: 0 12px; font: 500 12px var(--font-ui); color: var(--text-tertiary); }
+  .auth-fine { font: 400 12px/1.4 var(--font-ui); color: var(--text-tertiary); text-align: center; margin: 2px 0 0; }
+  .pick { display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; background: var(--surface-card); border: 1.5px solid var(--border-hair);
+    border-radius: var(--r-md); padding: 14px; transition: border-color .15s, background .15s; }
+  .pick.on { border-color: var(--action); background: var(--jade-50); }
+  .pick-ico { width: 38px; height: 38px; border-radius: 10px; background: var(--surface-sunk); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .pick.on .pick-ico { background: var(--jade-100); color: var(--action); }
+  .radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-strong); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .pick.on .radio { background: var(--action); border-color: var(--action); }
+
+  /* ---- sheets: chooser / primer / nudge ---- */
+  .chooser { display: flex; align-items: center; gap: 13px; width: 100%; cursor: pointer; background: var(--surface-card); border: 1.5px solid var(--border-hair);
+    border-radius: var(--r-lg); padding: 16px; margin-bottom: 10px; transition: border-color .15s, box-shadow .15s; }
+  .chooser:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+  .chooser.primary { border-color: var(--action); }
+  .chooser b { font: 600 15px var(--font-ui); display: block; margin-bottom: 2px; }
+  .chooser span span, .chooser > span > span { font: 400 12.5px/1.4 var(--font-ui); color: var(--text-secondary); display: block; }
+  .chooser-ico { width: 46px; height: 46px; border-radius: 12px; background: var(--jade-500); color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .chooser-ico.alt { background: var(--surface-sunk); color: var(--text-secondary); }
+  .primer-ico { width: 60px; height: 60px; border-radius: 50%; background: var(--amber-50); color: var(--amber-600); display: inline-flex; align-items: center; justify-content: center; }
+  .primer-cadence { display: flex; gap: 8px; margin: 4px 0 10px; }
+  .primer-cadence span { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--font-ui); color: var(--text-secondary); background: var(--surface-sunk); padding: 7px 11px; border-radius: 999px; }
+  .nudge-preview { background: var(--surface-sunk); border-radius: var(--r-md); padding: 14px; font: 400 14px/1.55 var(--font-ui); color: var(--text-primary); border: 1px solid var(--border-hair); }
+  .nudge-preview.rtl { font-family: var(--font-arabic); text-align: right; }
+
+  /* ---- settings ---- */
+  .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 2px; border-bottom: 1px solid var(--line-50); }
+  .set-row:last-child { border-bottom: none; }
+  .set-row > span:first-child { display: inline-flex; align-items: center; gap: 10px; font: 500 15px var(--font-ui); color: var(--text-primary); }
+  .set-row.tall { padding: 13px 2px; }
+  .set-link { display: flex; align-items: center; justify-content: space-between; width: 100%; background: transparent; border: none; cursor: pointer;
+    padding: 13px 2px; border-bottom: 1px solid var(--line-50); font: inherit; }
+  .set-link:last-child { border-bottom: none; }
+  .set-link span { display: inline-flex; align-items: center; gap: 10px; font: 500 15px var(--font-ui); color: var(--text-primary); }
+  .set-link.danger span { color: var(--overdue); }
+
+  /* ---- FAB ---- */
+  .fab { position: absolute; inset-inline-end: 18px; bottom: 84px; height: 54px; padding: 0 20px; border-radius: 999px; border: none; cursor: pointer;
+    background: var(--jade-500); color: #fff; font: 600 15px var(--font-ui); display: inline-flex; align-items: center; gap: 9px; box-shadow: var(--shadow-lg); z-index: 30;
+    transition: transform .12s var(--ease-snap); }
+  .fab:active { transform: scale(.96); }
+  .tabwrap { flex: none; }
+  .toast-host { position: absolute; inset-inline: 0; bottom: 86px; display: flex; justify-content: center; z-index: 60; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel" src="app-data.jsx"></script>
+<script type="text/babel" src="screens-core.jsx"></script>
+<script type="text/babel" src="screens-ai.jsx"></script>
+<script type="text/babel" src="screens-misc.jsx"></script>
+<script type="text/babel">
+const { TabBar, Toast } = window.MeridianDesignSystem_f018d0;
+
+const MAIN = ['home', 'deal', 'settings'];
+
+function App() {
+  const [screen, setScreen] = React.useState('home');
+  const [dealId, setDealId] = React.useState('marina');
+  const [sheet, setSheet] = React.useState(null);     // addDeal | markPaid | nudge | primer
+  const [sheetDeal, setSheetDeal] = React.useState(null);
+  const [tab, setTab] = React.useState('home');
+  const [lang, setLang] = React.useState('en');
+  const [theme, setTheme] = React.useState('light');
+  const [toast, setToast] = React.useState(null);
+  const t = STRINGS[lang];
+
+  React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+  React.useEffect(() => { if (!toast) return; const id = setTimeout(() => setToast(null), 2600); return () => clearTimeout(id); }, [toast]);
+
+  const go = (s) => { setScreen(s); if (MAIN.includes(s)) setTab(s === 'deal' ? 'deals' : s === 'settings' ? 'me' : 'home'); };
+  const openDeal = (id) => { setDealId(id); go('deal'); };
+  const markPaid = (d) => { setSheetDeal(d); setSheet('markPaid'); };
+  const nudge = (d) => { setSheetDeal(d); setSheet('nudge'); };
+  const confirmPaid = (d) => { setSheet(null); setToast({ tone: 'success', msg: `Marked paid · ${AED(d.next.amount)}` }); };
+  const sendNudge = () => { setSheet(null); setToast({ tone: 'success', msg: 'Nudge sent to the buyer' }); };
+
+  let view;
+  if (screen === 'auth') view = <AuthScreen onContinue={() => go('terms')} />;
+  else if (screen === 'terms') view = <TermsGate onContinue={() => go('onboarding')} />;
+  else if (screen === 'onboarding') view = <Onboarding onContinue={() => go('home')} />;
+  else if (screen === 'home') view = <PortfolioHome lang={lang} onOpen={openDeal} onMarkPaid={markPaid} onNudge={nudge} onAddDeal={() => setSheet('addDeal')} />;
+  else if (screen === 'deal') view = <DealDetail dealId={dealId} lang={lang} onBack={() => go('home')} onMarkPaid={markPaid} onNudge={nudge} />;
+  else if (screen === 'spaUpload') view = <SpaUpload onBack={() => setSheet('addDeal')} onScanned={() => go('spaReview')} onManual={() => go('spaReview')} />;
+  else if (screen === 'spaReview') view = <SpaReview onBack={() => go('home')} onBuild={() => { openDeal('marina'); setToast({ tone: 'success', msg: 'Plan built · 5 milestones tracked' }); }} />;
+  else if (screen === 'settings') view = <Settings onBack={() => go('home')} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} />;
+
+  const showTab = MAIN.includes(screen);
+  const ico = (n) => <Icon name={n} size={22} />;
+
+  return (
+    <React.Fragment>
+      <aside className="rail">
+        <div className="brand">
+          <svg width="30" height="30" viewBox="0 0 48 48" fill="none" style={{ color: 'var(--jade-500)' }}>
+            <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="3" /><line x1="6" y1="24" x2="42" y2="24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            <line x1="24" y1="4" x2="24" y2="11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /><circle cx="33" cy="24" r="5" fill="#E0922F" /></svg>
+          <b>Meridian</b>
+        </div>
+        <div className="rail-grp"><h4>First run</h4>
+          <button className={screen==='auth'?'on':''} onClick={() => go('auth')}>Sign in (passwordless)</button>
+          <button className={screen==='terms'?'on':''} onClick={() => go('terms')}>Age &amp; terms gate</button>
+          <button className={screen==='onboarding'?'on':''} onClick={() => go('onboarding')}>Context question</button>
+        </div>
+        <div className="rail-grp"><h4>Daily</h4>
+          <button className={screen==='home'?'on':''} onClick={() => go('home')}>What's due (home)</button>
+          <button className={screen==='deal'?'on':''} onClick={() => go('deal')}>Deal detail</button>
+          <button onClick={() => nudge(DEALS[0])}>Nudge composer</button>
+          <button onClick={() => setSheet('primer')}>Notification primer</button>
+        </div>
+        <div className="rail-grp"><h4>Capture a deal</h4>
+          <button onClick={() => setSheet('addDeal')}>Add deal chooser</button>
+          <button className={screen==='spaUpload'?'on':''} onClick={() => go('spaUpload')}>Upload SPA</button>
+          <button className={screen==='spaReview'?'on':''} onClick={() => go('spaReview')}>AI review ★</button>
+        </div>
+        <div className="rail-grp"><h4>Account</h4>
+          <button className={screen==='settings'?'on':''} onClick={() => go('settings')}>Settings</button>
+        </div>
+        <div className="rail-grp"><h4>Locale</h4>
+          <div className="toggles">
+            <button className={lang==='en'?'on':''} onClick={() => setLang('en')}>EN</button>
+            <button className={lang==='ar'?'on':''} onClick={() => setLang('ar')}>عربى</button>
+          </div>
+          <div className="toggles">
+            <button className={theme==='light'?'on':''} onClick={() => setTheme('light')}>Light</button>
+            <button className={theme==='dark'?'on':''} onClick={() => setTheme('dark')}>Dark</button>
+          </div>
+        </div>
+      </aside>
+
+      <div className="device" data-theme={theme === 'dark' ? 'dark' : undefined} dir={lang === 'ar' ? 'rtl' : 'ltr'}
+        style={{ fontFamily: lang === 'ar' ? 'var(--font-arabic)' : undefined }}>
+        <div className="statusbar">
+          <span>9:41</span><span className="notch"></span>
+          <span className="si"><Icon name="signal" size={15} /><Icon name="wifi" size={15} /><Icon name="battery-full" size={17} /></span>
+        </div>
+        <div className="stage">{view}</div>
+        {showTab && (
+          <div className="tabwrap">
+            <TabBar value={tab} onChange={(v) => go(v === 'deals' ? 'deal' : v === 'me' ? 'settings' : 'home')} items={[
+              { value: 'home', label: t.due, icon: ico('layout-list'), badge: 3 },
+              { value: 'deals', label: t.deals, icon: ico('folder') },
+              { value: 'comms', label: t.comms, icon: ico('bell') },
+              { value: 'me', label: t.you, icon: ico('user') },
+            ]} />
+          </div>
+        )}
+        {screen === 'home' && (
+          <button className="fab" onClick={() => setSheet('addDeal')}><Icon name="plus" size={22} /> {t.addDeal}</button>
+        )}
+
+        {sheet === 'addDeal' && <AddDealSheet onClose={() => setSheet(null)} onUpload={() => { setSheet(null); go('spaUpload'); }} onManual={() => { setSheet(null); go('spaReview'); }} />}
+        {sheet === 'markPaid' && <MarkPaidSheet deal={sheetDeal} onClose={() => setSheet(null)} onConfirm={confirmPaid} />}
+        {sheet === 'nudge' && <NudgeComposer deal={sheetDeal} lang={lang} onClose={() => setSheet(null)} onSend={sendNudge} />}
+        {sheet === 'primer' && <NotificationPrimer onClose={() => setSheet(null)} onEnable={() => { setSheet(null); setToast({ tone: 'success', msg: 'Reminders on · quiet hours 9pm–8am' }); }} />}
+
+        {toast && <div className="toast-host"><Toast tone={toast.tone}>{toast.msg}</Toast></div>}
+      </div>
+    </React.Fragment>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

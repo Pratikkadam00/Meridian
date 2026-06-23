@@ -1,0 +1,142 @@
+/* ============================================================
+   MERIDIAN — COLOR SYSTEM
+   Warm "paper" light theme + deep jade-ink dark theme.
+   Brand = Jade. Signature accent = Meridian Amber (sun at meridian).
+   Money-positive: paid lives in the brand family.
+   Rule: status is NEVER color-alone — always paired w/ icon + word.
+   ============================================================ */
+:root {
+  /* ---- Brand ramp (jade) ---- */
+  --jade-50:  #E7F3EF;
+  --jade-100: #C9E6DD;
+  --jade-200: #9CD0C1;
+  --jade-300: #66B3A0;
+  --jade-400: #2E9079;
+  --jade-500: #0E6E5C;   /* brand primary */
+  --jade-600: #0B5C4D;
+  --jade-700: #094B3F;
+  --jade-800: #0A2E2A;   /* brand ink / deep surface */
+  --jade-900: #07201D;
+
+  /* ---- Meridian amber (signature accent) ---- */
+  --amber-50:  #FBF0DA;
+  --amber-100: #F6DFB1;
+  --amber-300: #ECB45F;
+  --amber-500: #E0922F;  /* accent */
+  --amber-600: #B9791A;  /* amber text-on-light (AA) */
+  --amber-700: #8A5A12;
+
+  /* ---- Warm neutrals (paper) ---- */
+  --paper:     #F6F5F2;  /* app background */
+  --sand:      #EFEDE7;  /* sunken / inset */
+  --white:     #FFFFFF;  /* cards / surfaces */
+  --line-50:   #ECEAE3;  /* faint hairline */
+  --line-100:  #E2DFD8;  /* hairline */
+  --line-200:  #CFCBC1;  /* strong border */
+
+  --ink-900:   #16201E;  /* text primary */
+  --ink-700:   #3A4642;  /* text high-emphasis secondary */
+  --ink-500:   #5A655F;  /* text secondary */
+  --ink-400:   #8A938D;  /* tertiary / placeholder */
+  --ink-300:   #AEB5AF;  /* disabled text */
+
+  /* ---- Semantic ramps (status) ---- */
+  /* PAID / success (jade family) */
+  --paid:      #0E6E5C;
+  --paid-text: #0B5C4D;
+  --paid-bg:   #DCEFE9;
+  /* DUE this week (amber) */
+  --due:       #E0922F;
+  --due-text:  #8A5A12;
+  --due-bg:    #FBEFD8;
+  /* UPCOMING (slate info) */
+  --upcoming:      #41607A;
+  --upcoming-text: #2E4C64;
+  --upcoming-bg:   #E5EBF0;
+  /* OVERDUE (terracotta) */
+  --overdue:      #C0432B;
+  --overdue-text: #9A3320;
+  --overdue-bg:   #F8E3DC;
+  /* AT-RISK / CRITICAL (deep red — always w/ hatch + icon) */
+  --critical:      #A3231B;
+  --critical-text: #821B14;
+  --critical-bg:   #F6DBD7;
+
+  /* ---- AI confidence (icon + word + color + shape) ---- */
+  --conf-high: #0E6E5C;
+  --conf-med:  #E0922F;
+  --conf-low:  #C0432B;
+
+  /* ---- Semantic aliases (use these in components) ---- */
+  --bg-app:        var(--paper);
+  --surface-card:  var(--white);
+  --surface-sunk:  var(--sand);
+  --surface-ink:   var(--jade-800);   /* dark hero panels in light mode */
+  --border-hair:   var(--line-100);
+  --border-strong: var(--line-200);
+
+  --text-primary:   var(--ink-900);
+  --text-secondary: var(--ink-500);
+  --text-tertiary:  var(--ink-400);
+  --text-on-brand:  #F4FBF8;
+  --text-on-ink:    #E8F0ED;
+
+  --action:        var(--jade-500);
+  --action-hover:  var(--jade-600);
+  --action-press:  var(--jade-700);
+  --accent:        var(--amber-500);
+
+  --focus-ring:    #2E9079;
+  --overlay:       color-mix(in srgb, var(--jade-900) 55%, transparent);
+}
+
+/* ============================================================
+   DARK THEME — "Midnight Meridian" done right
+   Deep jade-ink base, paper-warm text, amber stays the spark.
+   ============================================================ */
+[data-theme="dark"] {
+  --paper:    #0A2E2A;
+  --sand:     #0E3833;
+  --white:    #103A35;   /* card */
+  --line-50:  #16433D;
+  --line-100: #1C4D46;
+  --line-200: #2A5F57;
+
+  --ink-900:  #ECF3F0;
+  --ink-700:  #C9D7D2;
+  --ink-500:  #95A8A2;
+  --ink-400:  #6E847E;
+  --ink-300:  #4F635D;
+
+  --paid-bg:     #0F4339;
+  --due-bg:      #3C2F12;
+  --upcoming-bg: #1B3346;
+  --overdue-bg:  #3E1F18;
+  --critical-bg: #421A15;
+
+  --due:       #ECB45F;
+  --due-text:  #ECB45F;
+  --paid-text: #66B3A0;
+  --overdue-text: #E58E78;
+  --critical-text:#E89084;
+  --upcoming-text:#92B2CC;
+
+  --bg-app:       var(--paper);
+  --surface-card: var(--white);
+  --surface-sunk: var(--sand);
+  --surface-ink:  #07201D;
+  --border-hair:  var(--line-100);
+  --border-strong:var(--line-200);
+
+  --text-primary:  var(--ink-900);
+  --text-secondary:var(--ink-500);
+  --text-tertiary: var(--ink-400);
+  --text-on-ink:   #E8F0ED;
+
+  --action:       #2E9079;
+  --action-hover: #66B3A0;
+  --action-press: #9CD0C1;
+  --accent:       var(--amber-500);
+  --focus-ring:   #66B3A0;
+  --overlay:      color-mix(in srgb, #000 60%, transparent);
+}

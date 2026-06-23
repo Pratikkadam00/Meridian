@@ -1,0 +1,44 @@
+/* ============================================================
+   MERIDIAN — MOTION
+   Calm, quick, instrument-precise. Ease-out arrivals, no bounce.
+   Money/status changes get a brief confirm pulse; nothing loops.
+   ============================================================ */
+:root {
+  --dur-1: 120ms;   /* @kind other */ /* micro: press, toggle */
+  --dur-2: 180ms;   /* @kind other */ /* default: fades, color */
+  --dur-3: 240ms;   /* @kind other */ /* enter: sheets, rows */
+  --dur-4: 360ms;   /* @kind other */ /* large surfaces */
+
+  --ease-out:  cubic-bezier(0.22, 1, 0.36, 1);   /* @kind other */
+  --ease-in:   cubic-bezier(0.4, 0, 1, 1);        /* @kind other */
+  --ease-mid:  cubic-bezier(0.4, 0, 0.2, 1);      /* @kind other */
+  --ease-snap: cubic-bezier(0.3, 0.7, 0.2, 1);    /* @kind other */
+}
+
+@keyframes mer-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes mer-fade {
+  from { opacity: 0; } to { opacity: 1; }
+}
+@keyframes mer-confirm-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--paid) 40%, transparent); }
+  100% { box-shadow: 0 0 0 12px transparent; }
+}
+@keyframes mer-shimmer {
+  from { background-position: -180px 0; }
+  to   { background-position: 180px 0; }
+}
+@keyframes mer-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

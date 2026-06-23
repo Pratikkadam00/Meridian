@@ -1,0 +1,91 @@
+<!-- @dsCard group="Components" viewport="700x560" name="Forms & inputs" subtitle="Buttons, icon buttons, fields, toggles, segmented" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="../../styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  body { margin: 0; padding: 26px; background: var(--bg-app); }
+  .grp { margin-bottom: 24px; }
+  .grp:last-child { margin-bottom: 0; }
+  .lbl { font: var(--fw-semibold) var(--fs-micro)/1 var(--font-ui); letter-spacing: var(--tracking-caps);
+         text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 12px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .col { display: flex; flex-direction: column; gap: 14px; max-width: 320px; }
+  [data-lucide] svg, svg[data-lucide] { width: 20px; height: 20px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { Button, IconButton, Input, Switch, Checkbox, SegmentedControl } = window.MeridianDesignSystem_f018d0;
+const ico = (n) => <i data-lucide={n}></i>;
+function Demo() {
+  const [push, setPush] = React.useState(true);
+  const [seg, setSeg] = React.useState('week');
+  const [agree, setAgree] = React.useState(true);
+  React.useEffect(() => { window.lucide && window.lucide.createIcons(); });
+  return (
+    <div>
+      <div className="grp">
+        <p className="lbl">Button · variants</p>
+        <div className="row">
+          <Button variant="primary" leftIcon={ico('upload')}>Upload the SPA</Button>
+          <Button variant="secondary">Enter manually</Button>
+          <Button variant="quiet">Later</Button>
+          <Button variant="ghost">Skip</Button>
+          <Button variant="danger" leftIcon={ico('trash-2')}>Delete</Button>
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">Button · sizes, state</p>
+        <div className="row">
+          <Button size="sm">Small</Button>
+          <Button size="md">Medium</Button>
+          <Button size="lg" rightIcon={ico('chevron-right')}>Large CTA</Button>
+          <Button loading>Saving</Button>
+          <Button disabled>Disabled</Button>
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">IconButton</p>
+        <div className="row">
+          <IconButton icon={ico('bell')} label="Reminders" variant="plain" />
+          <IconButton icon={ico('plus')} label="Add" variant="tonal" />
+          <IconButton icon={ico('check')} label="Confirm" variant="filled" />
+          <IconButton icon={ico('trash-2')} label="Delete" variant="danger" />
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">Input · money, confirm, IBAN</p>
+        <div className="col">
+          <Input label="Booking deposit" prefix="AED" mono tone="confirm" defaultValue="250,000"
+                 help="Tap a field to see its source in the SPA" />
+          <Input label="Escrow IBAN" mono placeholder="AE00 0000 0000 0000 0000 000" />
+          <Input label="Total price" prefix="AED" mono error="Doesn't reconcile to milestones" defaultValue="1,200,000" />
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">Switch · Checkbox · Segmented</p>
+        <div className="row" style={{ gap: '24px' }}>
+          <Switch checked={push} onChange={setPush} label="Push" />
+          <Checkbox checked={agree} onChange={setAgree}>I'm 18+ and accept the Terms</Checkbox>
+        </div>
+        <div style={{ marginTop: '14px', maxWidth: '340px' }}>
+          <SegmentedControl fullWidth value={seg} onChange={setSeg}
+            options={[{value:'today',label:'Due today'},{value:'week',label:'This week'},{value:'over',label:'Overdue'}]} />
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

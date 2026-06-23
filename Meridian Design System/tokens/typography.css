@@ -1,0 +1,54 @@
+/* ============================================================
+   MERIDIAN — TYPE SYSTEM
+   Display : Bricolage Grotesque — hero numbers, screen titles
+   UI/Body : Hanken Grotesk — everything functional
+   Data    : JetBrains Mono — AED amounts, IBANs, DLD/Oqood IDs
+   Arabic  : IBM Plex Sans Arabic — RTL, ~25% expansion headroom
+   ============================================================ */
+:root {
+  --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
+  --font-ui:      'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-arabic:  'IBM Plex Sans Arabic', 'Hanken Grotesk', sans-serif;
+
+  /* Type scale (mobile-first, px) */
+  --fs-display:  34px;   /* hero balance / big numerics */
+  --fs-title:    24px;   /* screen titles */
+  --fs-h1:       20px;
+  --fs-h2:       17px;
+  --fs-body:     16px;   /* default body */
+  --fs-sub:      15px;
+  --fs-label:    13px;
+  --fs-caption:  12px;
+  --fs-micro:    11px;   /* min size — use sparingly */
+
+  --lh-tight:  1.08; /* @kind font */
+  --lh-snug:   1.25; /* @kind font */
+  --lh-body:   1.5;  /* @kind font */
+
+  --tracking-display: -0.02em;
+  --tracking-tight:   -0.01em;
+  --tracking-normal:   0;
+  --tracking-caps:     0.06em;  /* eyebrow / overline */
+
+  --fw-regular: 400; /* @kind font */
+  --fw-medium:  500; /* @kind font */
+  --fw-semibold:600; /* @kind font */
+  --fw-bold:    700; /* @kind font */
+}
+
+/* Reusable text roles (optional helpers) */
+.t-display { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-display);
+             line-height: var(--lh-tight); letter-spacing: var(--tracking-display); }
+.t-title   { font-family: var(--font-display); font-weight: 600; font-size: var(--fs-title);
+             line-height: var(--lh-snug);  letter-spacing: var(--tracking-tight); }
+.t-h1      { font-family: var(--font-ui); font-weight: 600; font-size: var(--fs-h1); line-height: var(--lh-snug); }
+.t-body    { font-family: var(--font-ui); font-weight: 400; font-size: var(--fs-body); line-height: var(--lh-body); }
+.t-label   { font-family: var(--font-ui); font-weight: 500; font-size: var(--fs-label); line-height: 1.35; }
+.t-eyebrow { font-family: var(--font-ui); font-weight: 600; font-size: var(--fs-caption);
+             letter-spacing: var(--tracking-caps); text-transform: uppercase; }
+.t-mono    { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+.t-amount  { font-family: var(--font-mono); font-weight: 600; font-variant-numeric: tabular-nums;
+             letter-spacing: -0.01em; }
+
+[dir="rtl"], .is-rtl { font-family: var(--font-arabic); }

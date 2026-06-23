@@ -1,0 +1,24 @@
+/* ============================================================
+   MERIDIAN — BASE RESETS (light touch)
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-primary);
+  background: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+[dir="rtl"] body, body[dir="rtl"] { font-family: var(--font-arabic); }
+
+::selection { background: color-mix(in srgb, var(--accent) 32%, transparent); }
+
+/* tabular numerics everywhere figures matter */
+.tnum { font-variant-numeric: tabular-nums; }
+
+:focus-visible { outline: none; box-shadow: var(--ring); border-radius: var(--r-xs); }

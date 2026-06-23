@@ -1,0 +1,58 @@
+<!-- @dsCard group="Components" viewport="700x340" name="AI review (trust-but-verify)" subtitle="Confidence cues + SPA field review rows" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../../styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  body { margin: 0; padding: 26px; background: var(--bg-app); }
+  .grp { margin-bottom: 20px; }
+  .lbl { font: var(--fw-semibold) var(--fs-micro)/1 var(--font-ui); letter-spacing: var(--tracking-caps);
+         text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 12px; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .col { display: flex; flex-direction: column; gap: 10px; max-width: 460px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { ConfidenceCue, FieldReviewRow } = window.MeridianDesignSystem_f018d0;
+function Demo() {
+  const [sel, setSel] = React.useState('price');
+  return (
+    <div>
+      <div className="grp">
+        <p className="lbl">ConfidenceCue · word + shape + color, never a bare %</p>
+        <div className="row">
+          <ConfidenceCue level="high" />
+          <ConfidenceCue level="med" />
+          <ConfidenceCue level="low" />
+          <ConfidenceCue level="high" chip />
+          <ConfidenceCue level="med" chip />
+          <ConfidenceCue level="low" chip />
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">FieldReviewRow · tap to highlight source · confirm money/date</p>
+        <div className="col">
+          <FieldReviewRow label="Total price" value="AED 1,250,000" confidence="high" money
+            active={sel==='price'} onClick={() => setSel('price')} />
+          <FieldReviewRow label="Booking deposit" value="AED 250,000" confidence="med" money confirmed
+            active={sel==='dep'} onClick={() => setSel('dep')} />
+          <FieldReviewRow label="Escrow IBAN" value="AE07 0331 2345 6789 0123 456" confidence="low"
+            active={sel==='iban'} onClick={() => setSel('iban')} />
+          <FieldReviewRow label="Oqood certificate no." value={null} confidence="low"
+            active={sel==='oqood'} onClick={() => setSel('oqood')} />
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

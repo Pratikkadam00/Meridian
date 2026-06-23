@@ -1,0 +1,23 @@
+<!-- @dsCard group="Colors" viewport="700x190" name="Dark — Midnight Meridian" subtitle="The old dark baseline, done right: deep jade-ink." -->
+<!doctype html><html lang="en"><head><meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body{margin:0;padding:0;font-family:var(--font-ui);}
+  .wrap{padding:20px;}
+  .ramp{display:flex;gap:10px;}
+  .sw{flex:1;border-radius:var(--r-md);padding:12px;min-height:100px;display:flex;flex-direction:column;
+      justify-content:space-between;border:1px solid var(--border-hair);}
+  .name{font-size:12px;font-weight:600;}
+  .hex{font-family:var(--font-mono);font-size:11px;opacity:.85;}
+</style></head><body data-theme="dark">
+<div class="wrap" style="background:var(--bg-app)">
+  <div class="ramp">
+    <div class="sw" style="background:var(--paper)"><span class="name" style="color:var(--ink-900)">app bg</span><span class="hex" style="color:var(--ink-500)">#0A2E2A</span></div>
+    <div class="sw" style="background:var(--white)"><span class="name" style="color:var(--ink-900)">card</span><span class="hex" style="color:var(--ink-500)">#103A35</span></div>
+    <div class="sw" style="background:var(--action);color:#04130f"><span class="name">action</span><span class="hex">#2E9079</span></div>
+    <div class="sw" style="background:var(--accent);color:#3a2604"><span class="name">accent</span><span class="hex">#E0922F</span></div>
+    <div class="sw" style="background:var(--white);border-color:var(--paid)"><span class="name" style="color:var(--paid-text)">paid</span><span class="hex" style="color:var(--paid-text)">on dark</span></div>
+    <div class="sw" style="background:var(--white);border-color:var(--overdue)"><span class="name" style="color:var(--overdue-text)">overdue</span><span class="hex" style="color:var(--overdue-text)">on dark</span></div>
+  </div>
+</div>
+</body></html>

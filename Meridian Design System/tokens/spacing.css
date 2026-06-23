@@ -1,0 +1,38 @@
+/* ============================================================
+   MERIDIAN — SPACING, RADII, SIZING
+   4px base grid. Generous touch targets (one-handed, on-the-go).
+   ============================================================ */
+:root {
+  --sp-0:  0; /* @kind spacing */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;   /* default gutter */
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* Corner radii — moderate, instrument-precise */
+  --r-xs:   6px;   /* chips, tags */
+  --r-sm:  10px;   /* inputs, small buttons */
+  --r-md:  14px;   /* buttons, list rows */
+  --r-lg:  18px;   /* cards */
+  --r-xl:  24px;   /* sheets, hero panels */
+  --r-2xl: 32px;   /* modal sheets */
+  --r-pill: 999px; /* status pills, segmented */
+
+  /* Touch + control sizing (>=44px hit targets) */
+  --tap-min:   44px;
+  --ctrl-sm:   36px;
+  --ctrl-md:   48px;   /* default control height */
+  --ctrl-lg:   56px;   /* primary CTAs */
+
+  /* Layout */
+  --screen-pad:   20px;   /* mobile side padding */
+  --bottom-nav-h: 64px;
+  --safe-bottom:  env(safe-area-inset-bottom, 0px);
+  --content-max:  440px;  /* phone canvas */
+}

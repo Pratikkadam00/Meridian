@@ -1,0 +1,229 @@
+<!-- @dsCard group="Meridian App" viewport="980x900" name="Meridian — 2026 (dark-first)" subtitle="Researched 2026 rebuild: dark-first, bento home, Liquid-Glass chrome, swipe row-actions, nav-bar primary action. All 25 screens + states, EN/AR." -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meridian — 2026 App (dark-first)</title>
+<link rel="stylesheet" href="../../styles.css" />
+<link rel="stylesheet" href="app.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: #14201E; background-image: radial-gradient(circle at 50% 0%, #1d3431 0%, #0c1614 60%);
+    display: flex; align-items: flex-start; justify-content: center; padding: 40px; box-sizing: border-box; color: #ECF3F0; }
+  #root { display: flex; align-items: flex-start; justify-content: center; gap: 36px; width: 100%; }
+
+  /* rail */
+  .rail { width: 212px; flex: none; position: sticky; top: 40px; display: flex; flex-direction: column; gap: 16px; }
+  .rail .brand { display: flex; align-items: center; gap: 10px; }
+  .rail .brand b { font: 700 20px var(--font-display); letter-spacing: -.02em; color: #ECF3F0; }
+  .rail-grp { display: flex; flex-direction: column; gap: 3px; }
+  .rail-grp h4 { font: 600 10px var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: #5f7a73; margin: 6px 2px 2px; }
+  .rail button { display: flex; align-items: center; gap: 9px; border: none; background: transparent; cursor: pointer;
+    font: 500 13px var(--font-ui); color: #b6c8c2; padding: 6px 10px; border-radius: 9px; text-align: left; transition: background .15s, color .15s; }
+  .rail button:hover { background: rgba(255,255,255,.06); color: #ECF3F0; }
+  .rail button.on { background: var(--jade-500); color: #fff; }
+  .rail .toggles { display: flex; gap: 8px; }
+  .rail .toggles button { flex: 1; justify-content: center; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); padding: 8px; color: #b6c8c2; }
+  .rail .toggles button.on { background: #ECF3F0; color: #0c1614; border-color: #ECF3F0; }
+
+  /* phone — dark device */
+  .device { width: 390px; height: 820px; flex: none; position: relative; overflow: hidden;
+    background: var(--bg-app); border-radius: 46px; box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 0 0 2px rgba(255,255,255,.04);
+    border: 9px solid #05100E; display: flex; flex-direction: column; }
+  .statusbar { height: 46px; flex: none; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 30px; font: 600 14px var(--font-ui); color: var(--text-primary); position: relative; z-index: 8; }
+  .statusbar .notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 96px; height: 26px; background: #05100E; border-radius: 16px; }
+  .statusbar .si { display: flex; gap: 6px; align-items: center; }
+  .stage { flex: 1; min-height: 0; position: relative; display: flex; }
+  .stage.with-nav .scroll { padding-bottom: 92px; }
+  .fab { display: none; }   /* 2026: primary action lives in the nav bar */
+
+  /* glass chrome (surgical — chrome only) */
+  .glass { background: color-mix(in srgb, var(--bg-app) 70%, transparent);
+    -webkit-backdrop-filter: saturate(1.5) blur(20px); backdrop-filter: saturate(1.5) blur(20px); }
+  .home2-head { display: flex; align-items: center; justify-content: space-between; padding: 8px var(--screen-pad) 10px;
+    border-bottom: 1px solid var(--border-hair); position: relative; z-index: 6; }
+
+  /* bento */
+  .bento { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .span2 { grid-column: 1 / -1; }
+  .tile { border: 1px solid var(--border-hair); background: var(--surface-card); border-radius: var(--r-lg); padding: 16px;
+    cursor: pointer; text-align: start; color: var(--text-primary); box-shadow: var(--shadow-sm);
+    transition: transform .12s var(--ease-snap), box-shadow .2s var(--ease-mid); display: flex; flex-direction: column; }
+  .tile:active { transform: scale(.98); }
+  .tile:hover { box-shadow: var(--shadow-md); }
+  .tile.hero { background: var(--surface-ink); border-color: transparent; color: var(--text-on-ink); padding: 18px; position: relative; overflow: hidden; }
+  .tile.stat { gap: 8px; min-height: 104px; justify-content: flex-start; }
+  .tile-ico { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; }
+  .tile-ico.over { background: var(--overdue-bg); color: var(--overdue); }
+  .tile-ico.grace { background: var(--due-bg); color: var(--due-text); }
+  .tile-ico.jade { background: var(--jade-50); color: var(--action); }
+  .tile-ico.amber { background: var(--amber-50); color: var(--amber-600); }
+  .tile-num { font: 700 22px var(--font-display); letter-spacing: -.01em; margin-top: 2px; }
+  .tile-lbl { font: 400 12px var(--font-ui); color: var(--text-secondary); }
+  .tile.risk { flex-direction: row; align-items: center; gap: 11px; background: var(--critical-bg); border-color: var(--critical); color: var(--critical-text);
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 7px, rgba(163,35,27,.06) 7px, rgba(163,35,27,.06) 14px); }
+
+  /* swipe rows */
+  .swipe { position: relative; border-radius: var(--r-lg); overflow: hidden; }
+  .swipe-actions { position: absolute; top: 0; bottom: 0; display: flex; gap: 6px; align-items: center; padding: 0 10px; }
+  .swa { width: 48px; height: 48px; border-radius: 14px; border: none; cursor: pointer; color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+  .swa.paid { background: var(--jade-500); }
+  .swa.nudge { background: var(--upcoming); }
+  .swipe-fg { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--surface-card);
+    border: 1px solid var(--border-hair); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); cursor: pointer; touch-action: pan-y;
+    transition: transform .22s var(--ease-out); }
+  @keyframes peek { 0%, 100% { transform: translateX(0); } 35%, 55% { transform: translateX(-52px); } }
+  .swipe-fg.peek { animation: peek 1.7s var(--ease-out) .7s 1 both; }
+
+  /* "do this first" focus anchor */
+  .focus-card { background: var(--surface-card); border: 1px solid var(--border-hair); border-radius: var(--r-lg);
+    padding: 16px; box-shadow: var(--shadow-md); margin-bottom: 14px; }
+  .focus-top { display: flex; align-items: center; justify-content: space-between; }
+  .focus-title { font: 600 16px var(--font-display); margin-top: 10px; }
+  .focus-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+  /* glass bottom nav with integrated primary action */
+  .navbar { position: absolute; inset-inline: 0; bottom: 0; z-index: 20; display: flex; align-items: center; justify-content: space-around;
+    padding: 10px 14px calc(12px + var(--safe-bottom)); border-top: 1px solid var(--border-hair); }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; border: none; background: transparent; cursor: pointer;
+    color: var(--text-tertiary); font: 500 10.5px var(--font-ui); flex: 1; padding: 4px 0; transition: color .15s; }
+  .nav-item.on { color: var(--action); }
+  .nav-add { flex: none; width: 54px; height: 54px; border-radius: 50%; border: none; cursor: pointer; background: var(--jade-500); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(14,110,92,.5); margin-top: -22px;
+    transition: transform .12s var(--ease-snap); }
+  .nav-add:active { transform: scale(.92); }
+  .toast-host { position: absolute; inset-inline: 0; bottom: 96px; display: flex; justify-content: center; z-index: 60; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel" src="app-data.jsx"></script>
+<script type="text/babel" src="screens-core.jsx"></script>
+<script type="text/babel" src="screens-ai.jsx"></script>
+<script type="text/babel" src="screens-misc.jsx"></script>
+<script type="text/babel" src="screens-deals.jsx"></script>
+<script type="text/babel" src="screens-relationship.jsx"></script>
+<script type="text/babel" src="screens-money-risk.jsx"></script>
+<script type="text/babel" src="screens-states.jsx"></script>
+<script type="text/babel" src="screens-home2.jsx"></script>
+<script type="text/babel">
+const { Toast } = window.MeridianDesignSystem_f018d0;
+
+// screens that take the full canvas (no bottom nav)
+const NO_NAV = ['auth', 'terms', 'onboarding', 'spaUpload', 'spaReview', 'manual', 'scanFailed', 'portal', 'empty', 'offline', 'error'];
+
+function App() {
+  const [screen, setScreen] = React.useState('home');
+  const [dealId, setDealId] = React.useState('marina');
+  const [sheet, setSheet] = React.useState(null);
+  const [sheetDeal, setSheetDeal] = React.useState(null);
+  const [lang, setLang] = React.useState('en');
+  const [theme, setTheme] = React.useState('dark');   // dark-first
+  const [toast, setToast] = React.useState(null);
+  const t = STRINGS[lang];
+
+  React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+  React.useEffect(() => { if (!toast) return; const id = setTimeout(() => setToast(null), 2600); return () => clearTimeout(id); }, [toast]);
+
+  const go = (s) => setScreen(s);
+  const openDeal = (id) => { setDealId(id); setScreen('deal'); };
+  const markPaid = (d) => { setSheetDeal(d); setSheet('markPaid'); };
+  const nudge = (d) => { setSheetDeal(d); setSheet('nudge'); };
+  const showToast = (msg, tone = 'success') => setToast({ msg, tone });
+
+  const railBtn = (s, label) => <button className={screen === s ? 'on' : ''} onClick={() => { setSheet(null); go(s); }}>{label}</button>;
+
+  let view;
+  switch (screen) {
+    case 'auth': view = <AuthScreen onContinue={() => go('terms')} />; break;
+    case 'terms': view = <TermsGate onContinue={() => go('onboarding')} />; break;
+    case 'onboarding': view = <Onboarding onContinue={() => go('home')} />; break;
+    case 'home': view = <HomeBento lang={lang} onOpen={openDeal} onMarkPaid={markPaid} onNudge={nudge} onAddDeal={() => setSheet('addDeal')} onRoute={go} />; break;
+    case 'deals': view = <DealsList onOpen={openDeal} onAddDeal={() => setSheet('addDeal')} />; break;
+    case 'deal': view = <DealDetail dealId={dealId} lang={lang} onBack={() => go('home')} onMarkPaid={markPaid} onNudge={nudge} />; break;
+    case 'milestone': view = <MilestoneDetail onBack={() => go('deal')} onMarkPaid={markPaid} onNudge={nudge} />; break;
+    case 'manual': view = <ManualEntry onBack={() => setSheet('addDeal')} onSave={() => { openDeal('marina'); showToast('Deal saved · 4 milestones tracked'); }} />; break;
+    case 'spaUpload': view = <SpaUpload onBack={() => setSheet('addDeal')} onScanned={() => go('spaReview')} onManual={() => go('manual')} />; break;
+    case 'spaReview': view = <SpaReview onBack={() => go('home')} onBuild={() => { openDeal('marina'); showToast('Plan built · 5 milestones tracked'); }} />; break;
+    case 'scanFailed': view = <ScanFailed onBack={() => go('spaUpload')} onManual={() => go('manual')} />; break;
+    case 'client': view = <ClientRecord onBack={() => go('deal')} onNudge={nudge} />; break;
+    case 'profile': view = <Profile onBack={() => go('home')} onSettings={() => go('settings')} />; break;
+    case 'portal': view = <ClientPortal onBack={() => go('home')} />; break;
+    case 'handover': view = <HandoverSnagging onBack={() => go('deal')} />; break;
+    case 'assignment': view = <AssignmentDesk onBack={() => go('deal')} />; break;
+    case 'commission': view = <CommissionLedger onBack={() => go('deal')} />; break;
+    case 'risk': view = <RiskPanel onBack={() => go('home')} />; break;
+    case 'team': view = <TeamDashboard onBack={() => go('home')} />; break;
+    case 'settings': view = <Settings onBack={() => go('home')} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} />; break;
+    case 'empty': view = <EmptyDue onAddDeal={() => setSheet('addDeal')} />; break;
+    case 'offline': view = <OfflineState onRetry={() => go('home')} />; break;
+    case 'error': view = <ErrorState onRetry={() => go('home')} />; break;
+    default: view = <HomeBento lang={lang} onOpen={openDeal} onMarkPaid={markPaid} onNudge={nudge} onAddDeal={() => setSheet('addDeal')} onRoute={go} />;
+  }
+
+  const showNav = !NO_NAV.includes(screen);
+  const navOn = (s) => screen === s;
+
+  return (
+    <React.Fragment>
+      <aside className="rail">
+        <div className="brand">
+          <svg width="30" height="30" viewBox="0 0 48 48" fill="none" style={{ color: 'var(--jade-300)' }}>
+            <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="3" /><line x1="6" y1="24" x2="42" y2="24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            <line x1="24" y1="4" x2="24" y2="11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /><circle cx="33" cy="24" r="5" fill="#E0922F" /></svg>
+          <b>Meridian</b><span style={{ font: '600 9px var(--font-ui)', letterSpacing: '.1em', color: 'var(--jade-300)', border: '1px solid var(--jade-700)', padding: '2px 5px', borderRadius: 5 }}>2026</span>
+        </div>
+        <div className="rail-grp"><h4>First run</h4>{railBtn('auth', 'Sign in')}{railBtn('terms', 'Age & terms')}{railBtn('onboarding', 'Context')}</div>
+        <div className="rail-grp"><h4>Daily</h4>{railBtn('home', "What's due · bento ★")}{railBtn('deals', 'Deals list')}{railBtn('deal', 'Deal detail')}{railBtn('milestone', 'Milestone detail')}</div>
+        <div className="rail-grp"><h4>Capture</h4><button onClick={() => setSheet('addDeal')}>Add deal chooser</button>{railBtn('spaUpload', 'Upload SPA')}{railBtn('spaReview', 'AI review ★')}{railBtn('manual', 'Manual entry')}{railBtn('scanFailed', 'Scan failed')}</div>
+        <div className="rail-grp"><h4>Relationship</h4>{railBtn('client', 'Client record')}{railBtn('portal', 'Client portal')}<button onClick={() => nudge(DEALS[0])}>Nudge composer</button>{railBtn('handover', 'Handover / snag')}{railBtn('assignment', 'Assignment desk')}</div>
+        <div className="rail-grp"><h4>Money & risk</h4>{railBtn('commission', 'Commission ledger')}{railBtn('risk', 'Risk · Article 11')}{railBtn('team', 'Team dashboard')}</div>
+        <div className="rail-grp"><h4>Account</h4>{railBtn('profile', 'Profile')}{railBtn('settings', 'Settings')}<button onClick={() => setSheet('primer')}>Notification primer</button></div>
+        <div className="rail-grp"><h4>States</h4>{railBtn('empty', 'Empty · caught up')}{railBtn('offline', 'Offline')}{railBtn('error', 'Error')}</div>
+        <div className="rail-grp"><h4>Locale & theme</h4>
+          <div className="toggles"><button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button><button className={lang === 'ar' ? 'on' : ''} onClick={() => setLang('ar')}>عربى</button></div>
+          <div className="toggles"><button className={theme === 'dark' ? 'on' : ''} onClick={() => setTheme('dark')}>Dark</button><button className={theme === 'light' ? 'on' : ''} onClick={() => setTheme('light')}>Light</button></div>
+        </div>
+      </aside>
+
+      <div className="device" data-theme={theme === 'dark' ? 'dark' : undefined} dir={lang === 'ar' ? 'rtl' : 'ltr'}
+        style={{ fontFamily: lang === 'ar' ? 'var(--font-arabic)' : undefined }}>
+        <div className="statusbar">
+          <span>9:41</span><span className="notch"></span>
+          <span className="si"><Icon name="signal" size={15} /><Icon name="wifi" size={15} /><Icon name="battery-full" size={17} /></span>
+        </div>
+        <div className={'stage' + (showNav ? ' with-nav' : '')}>
+          {view}
+          {showNav && (
+            <nav className="navbar glass">
+              <button className={'nav-item' + (navOn('home') ? ' on' : '')} onClick={() => go('home')}><Icon name="layout-grid" size={22} /><span>{t.due}</span></button>
+              <button className={'nav-item' + (navOn('deals') ? ' on' : '')} onClick={() => go('deals')}><Icon name="folder" size={22} /><span>{t.deals}</span></button>
+              <button className="nav-add" onClick={() => setSheet('addDeal')} aria-label={t.addDeal}><Icon name="plus" size={26} /></button>
+              <button className={'nav-item' + (navOn('client') ? ' on' : '')} onClick={() => go('client')}><Icon name="users" size={22} /><span>{t.comms}</span></button>
+              <button className={'nav-item' + (navOn('profile') ? ' on' : '')} onClick={() => go('profile')}><Icon name="user" size={22} /><span>{t.you}</span></button>
+            </nav>
+          )}
+
+          {sheet === 'addDeal' && <AddDealSheet onClose={() => setSheet(null)} onUpload={() => { setSheet(null); go('spaUpload'); }} onManual={() => { setSheet(null); go('manual'); }} />}
+          {sheet === 'markPaid' && <MarkPaidSheet deal={sheetDeal} onClose={() => setSheet(null)} onConfirm={(d) => { setSheet(null); showToast('Marked paid · ' + AED(d.next.amount)); }} />}
+          {sheet === 'nudge' && <NudgeComposer deal={sheetDeal} lang={lang} onClose={() => setSheet(null)} onSend={() => { setSheet(null); showToast('Nudge sent to the buyer'); }} />}
+          {sheet === 'primer' && <NotificationPrimer onClose={() => setSheet(null)} onEnable={() => { setSheet(null); showToast('Reminders on · quiet hours 9pm–8am'); }} />}
+
+          {toast && <div className="toast-host"><Toast tone={toast.tone}>{toast.msg}</Toast></div>}
+        </div>
+      </div>
+    </React.Fragment>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

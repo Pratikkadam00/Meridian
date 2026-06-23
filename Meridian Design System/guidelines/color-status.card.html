@@ -1,0 +1,20 @@
+<!-- @dsCard group="Colors" viewport="700x180" name="Status semantics" subtitle="Each pairs a fill + text + bg. Always with icon + word." -->
+<!doctype html><html lang="en"><head><meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body{margin:0;padding:20px;background:var(--bg-app);font-family:var(--font-ui);}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+  .chip{border-radius:var(--r-md);padding:12px;display:flex;flex-direction:column;gap:8px;border:1px solid var(--border-hair);}
+  .dot{width:16px;height:16px;border-radius:50%;}
+  .nm{font-size:12px;font-weight:700;}
+  .px{font-family:var(--font-mono);font-size:10px;}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:5px 9px;border-radius:999px;}
+</style></head><body>
+<div class="grid">
+  <div class="chip"><span class="dot" style="background:var(--paid)"></span><span class="nm" style="color:var(--paid-text)">Paid</span><span class="pill" style="background:var(--paid-bg);color:var(--paid-text)">jade</span><span class="px">#0E6E5C</span></div>
+  <div class="chip"><span class="dot" style="background:var(--due)"></span><span class="nm" style="color:var(--due-text)">Due</span><span class="pill" style="background:var(--due-bg);color:var(--due-text)">amber</span><span class="px">#E0922F</span></div>
+  <div class="chip"><span class="dot" style="background:var(--upcoming)"></span><span class="nm" style="color:var(--upcoming-text)">Upcoming</span><span class="pill" style="background:var(--upcoming-bg);color:var(--upcoming-text)">slate</span><span class="px">#41607A</span></div>
+  <div class="chip"><span class="dot" style="background:var(--overdue)"></span><span class="nm" style="color:var(--overdue-text)">Overdue</span><span class="pill" style="background:var(--overdue-bg);color:var(--overdue-text)">terracotta</span><span class="px">#C0432B</span></div>
+  <div class="chip"><span class="dot" style="background:var(--critical)"></span><span class="nm" style="color:var(--critical-text)">At risk</span><span class="pill" style="background:var(--critical-bg);color:var(--critical-text)">critical</span><span class="px">#A3231B</span></div>
+</div>
+</body></html>

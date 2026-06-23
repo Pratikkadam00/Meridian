@@ -1,0 +1,52 @@
+<!-- @dsCard group="Components" viewport="700x320" name="Money & milestones" subtitle="AED amounts and time- vs construction-linked rows" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../../styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  body { margin: 0; padding: 26px; background: var(--bg-app); }
+  .grp { margin-bottom: 20px; }
+  .lbl { font: var(--fw-semibold) var(--fs-micro)/1 var(--font-ui); letter-spacing: var(--tracking-caps);
+         text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 10px; }
+  .row { display: flex; gap: 22px; flex-wrap: wrap; align-items: baseline; }
+  .sheet { background: var(--surface-card); border: 1px solid var(--border-hair); border-radius: var(--r-lg);
+           box-shadow: var(--shadow-sm); padding: 8px 12px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { Amount, MilestoneRow } = window.MeridianDesignSystem_f018d0;
+function Demo() {
+  return (
+    <div>
+      <div className="grp">
+        <p className="lbl">Amount · AED, tabular mono</p>
+        <div className="row">
+          <Amount value={1250000} size="xl" />
+          <Amount value={250000} size="lg" />
+          <Amount value={75000} tone="paid" />
+          <Amount value={null} tone="muted" />
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">MilestoneRow · time-linked vs construction-linked</p>
+        <div className="sheet">
+          <MilestoneRow type="time" title="Booking deposit (20%)" due="Paid 14 Mar 2026" status="paid" amount={250000} />
+          <MilestoneRow type="time" title="DLD registration fee (4%)" due="Due 28 Jun 2026" status="due" statusLabel="Due in 3 days" amount={75000} />
+          <MilestoneRow type="construction" title="1st construction milestone (10%)" due="on 20% build · est. Q4 2026" status="upcoming" amount={125000} />
+          <MilestoneRow type="time" title="2nd installment (10%)" due="Overdue · 11 May 2026" status="overdue" statusLabel="Overdue 6 days" amount={125000} />
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>
