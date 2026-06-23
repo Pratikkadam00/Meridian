@@ -185,7 +185,7 @@ export const tokens = {
       gap: 6,
       paddingVertical: 5,
       paddingHorizontal: 12,
-      fontSize: 11.5,
+      fontSize: 11, // §6 .chip font-size:11px
       lineHeight: 16,
     },
   },

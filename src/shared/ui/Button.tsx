@@ -102,8 +102,8 @@ function ButtonFill({ variant, solid, radius }: { variant: ButtonVariant; solid:
     return (
       <LinearGradient
         colors={[tokens.colors.goldBright, tokens.colors.accent2]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        start={{ x: 0.25, y: 0.07 }}
+        end={{ x: 0.75, y: 0.93 }}
         style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
       />
     );

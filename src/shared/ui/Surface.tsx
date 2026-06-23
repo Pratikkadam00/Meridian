@@ -14,7 +14,7 @@ type SurfaceProps = {
 export function Surface({ children, variant = "panel", style }: SurfaceProps) {
   if (variant === "card" || variant === "card-due") {
     return (
-      <LinearGradient colors={[tokens.colors.deck, tokens.colors.deckEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.card, variant === "card-due" && styles.cardDue, style]}>
+      <LinearGradient colors={[tokens.colors.deck, tokens.colors.deckEnd]} start={{ x: 0.37, y: 0.02 }} end={{ x: 0.63, y: 0.98 }} style={[styles.card, variant === "card-due" && styles.cardDue, style]}>
         {children}
       </LinearGradient>
     );

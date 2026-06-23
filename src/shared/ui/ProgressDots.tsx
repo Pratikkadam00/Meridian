@@ -12,7 +12,13 @@ export function ProgressDots({ count, activeIndex, compact = false }: ProgressDo
   return (
     <View style={compact ? styles.compact : styles.full}>
       {Array.from({ length: count }, (_, index) => (
-        <View key={index} style={[compact ? styles.compactDot : styles.fullDot, index === activeIndex && styles.active]} />
+        <View
+          key={index}
+          style={[
+            compact ? styles.compactDot : styles.fullDot,
+            index === activeIndex && (compact ? styles.compactActive : styles.fullActive),
+          ]}
+        />
       ))}
     </View>
   );
@@ -39,7 +45,12 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.pill,
     backgroundColor: tokens.colors.line,
   },
-  active: {
+  // onboarding bars stay equal-width and just turn gold (§6.2–6.5 .prog-dots i.on)
+  fullActive: {
+    backgroundColor: tokens.colors.accent,
+  },
+  // welcome/deck dots grow to a gold pill (§6.1 active 24px)
+  compactActive: {
     width: 24,
     backgroundColor: tokens.colors.accent,
   },

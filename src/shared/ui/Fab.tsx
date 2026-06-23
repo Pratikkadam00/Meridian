@@ -25,7 +25,7 @@ export function Fab({ icon: Icon = Plus, label = "Create", disabled, accessibili
       pressScale={tokens.control.fab.pressScale}
       pressableStyle={styles.base}
     >
-      <LinearGradient colors={[tokens.colors.goldBright, tokens.colors.accent2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[tokens.colors.goldBright, tokens.colors.accent2]} start={{ x: 0.25, y: 0.07 }} end={{ x: 0.75, y: 0.93 }} style={StyleSheet.absoluteFill} />
       <View style={styles.iconWrap}>
         <Icon size={tokens.control.fab.iconSize} color={tokens.colors.goldInk} strokeWidth={2.4} />
       </View>

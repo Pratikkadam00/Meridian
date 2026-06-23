@@ -24,21 +24,25 @@ const styles = StyleSheet.create({
   display: {
     fontFamily: tokens.font.displayBold,
     fontSize: 38,
+    letterSpacing: -1.14, // -0.03em per §2
     lineHeight: 40,
   },
   h1: {
     fontFamily: tokens.font.displayBold,
     fontSize: 28,
+    letterSpacing: -0.56, // -0.02em per §2
     lineHeight: 32,
   },
   amount: {
     fontFamily: tokens.font.displayBold,
     fontSize: 42,
+    letterSpacing: -1.26, // -0.03em per §2
     lineHeight: 48,
   },
   cardTitle: {
     fontFamily: tokens.font.displayBold,
     fontSize: 27,
+    letterSpacing: -0.54, // -0.02em per §6 .dcard .proj
     lineHeight: 31,
   },
   body: {

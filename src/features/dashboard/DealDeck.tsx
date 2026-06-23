@@ -141,8 +141,8 @@ function DealCard({ deal, isRTL }: { deal: DashboardDeal; isRTL: boolean }) {
   return (
     <LinearGradient
       colors={[tokens.colors.deck, tokens.colors.deckEnd]}
-      start={{ x: 0.12, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      start={{ x: 0.37, y: 0.02 }}
+      end={{ x: 0.63, y: 0.98 }}
       style={[styles.card, deal.status === "due" && styles.cardDue, deal.status === "over" && styles.cardOver, isRTL && styles.rtl]}
     >
       <Text variant="eyebrow">
