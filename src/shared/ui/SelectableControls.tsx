@@ -1,7 +1,8 @@
 import { Check, type LucideIcon } from "lucide-react-native";
 import { StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 
 import { PressableScale } from "./PressableScale";
 import { Text } from "./Text";
@@ -30,20 +31,21 @@ export type OptionChipProps = Omit<PressableProps, "children" | "style"> & {
 };
 
 export function SegmentedControl<T extends string>({ options, labels, value, onChange, accessibilityLabel, style }: SegmentedControlProps<T>) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View accessibilityLabel={accessibilityLabel} accessibilityRole="tablist" style={[styles.segment, style]}>
       {options.map((option) => {
         const selected = option === value;
-
         return (
           <PressableScale
             key={option}
             accessibilityLabel={labels?.[option] ?? option}
-            focusRadius={tokens.control.segmented.itemRadius + tokens.control.focusRingOffset}
+            accessibilityRole="tab"
+            focusRadius={999}
             haptic
             onPress={() => onChange(option)}
             outerStyle={styles.segmentItemWrap}
-            pressScale={tokens.control.optionChip.pressScale}
+            pressScale={0.98}
             pressableStyle={[styles.segmentOption, selected && styles.segmentOptionSelected]}
             selected={selected}
           >
@@ -58,46 +60,47 @@ export function SegmentedControl<T extends string>({ options, labels, value, onC
 }
 
 export function OptionCard({ title, subtitle, icon: Icon, selected = false, disabled, accessibilityLabel, style, ...props }: OptionCardProps) {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <PressableScale
       {...props}
       accessibilityLabel={accessibilityLabel ?? title}
       disabled={Boolean(disabled)}
-      focusRadius={tokens.control.optionCard.radius + tokens.control.focusRingOffset}
+      focusRadius={theme.radius.lg + 3}
       haptic
       outerStyle={style}
-      pressScale={tokens.control.optionCard.pressScale}
+      pressScale={0.98}
       pressableStyle={[styles.optionCard, selected && styles.optionCardSelected]}
       selected={selected}
     >
       <View style={styles.optionIcon}>
-        <Icon size={22} color={tokens.colors.accent} strokeWidth={2.1} />
+        <Icon size={22} color={theme.color.action} strokeWidth={2.1} />
       </View>
       <View style={styles.optionCopy}>
-        <Text variant="cardTitle" style={styles.optionTitle}>
-          {title}
-        </Text>
+        <Text style={styles.optionTitle}>{title}</Text>
         <Text variant="caption" muted style={styles.optionSubtitle}>
           {subtitle}
         </Text>
       </View>
       <View style={[styles.optionTick, selected && styles.optionTickSelected]}>
-        {selected ? <Check size={13} color={tokens.colors.goldInk} strokeWidth={3} /> : null}
+        {selected ? <Check size={13} color={theme.color.textOnBrand} strokeWidth={3} /> : null}
       </View>
     </PressableScale>
   );
 }
 
 export function OptionChip({ label, selected = false, disabled, accessibilityLabel, style, ...props }: OptionChipProps) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <PressableScale
       {...props}
       accessibilityLabel={accessibilityLabel ?? label}
       disabled={Boolean(disabled)}
-      focusRadius={tokens.control.optionChip.radius + tokens.control.focusRingOffset}
+      focusRadius={14}
       haptic
       outerStyle={style}
-      pressScale={tokens.control.optionChip.pressScale}
+      pressScale={0.98}
       pressableStyle={[styles.optionChip, selected && styles.optionChipSelected]}
       selected={selected}
     >
@@ -108,103 +111,96 @@ export function OptionChip({ label, selected = false, disabled, accessibilityLab
   );
 }
 
-const styles = StyleSheet.create({
-  segment: {
-    minHeight: tokens.control.segmented.minHeight,
-    flexDirection: "row",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.control.segmented.radius,
-    backgroundColor: tokens.colors.panel,
-    padding: tokens.control.segmented.padding,
-  },
-  segmentItemWrap: {
-    flex: 1,
-  },
-  segmentOption: {
-    minHeight: tokens.control.minTouchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: tokens.control.segmented.itemRadius,
-    paddingHorizontal: tokens.control.segmented.itemPaddingHorizontal,
-    paddingVertical: tokens.control.segmented.itemPaddingVertical,
-  },
-  segmentOptionSelected: {
-    backgroundColor: tokens.colors.panel2,
-  },
-  segmentText: {
-    color: tokens.colors.muted,
-    fontFamily: tokens.font.bodyMedium,
-  },
-  segmentTextSelected: {
-    color: tokens.colors.ink,
-  },
-  optionCard: {
-    minHeight: tokens.control.optionCard.minHeight,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.control.optionCard.gap,
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.control.optionCard.radius,
-    backgroundColor: tokens.colors.panel,
-    padding: tokens.control.optionCard.padding,
-  },
-  optionCardSelected: {
-    borderColor: tokens.colors.accent,
-    backgroundColor: tokens.colors.goldTint,
-  },
-  optionIcon: {
-    width: tokens.control.optionCard.iconSize,
-    height: tokens.control.optionCard.iconSize,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: tokens.control.optionCard.iconRadius,
-    backgroundColor: tokens.colors.panel2,
-  },
-  optionCopy: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 16,
-    lineHeight: 20,
-  },
-  optionSubtitle: {
-    marginTop: 2,
-  },
-  optionTick: {
-    width: tokens.control.optionCard.tickSize,
-    height: tokens.control.optionCard.tickSize,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.pill,
-  },
-  optionTickSelected: {
-    borderColor: tokens.colors.accent,
-    backgroundColor: tokens.colors.accent,
-  },
-  optionChip: {
-    minHeight: tokens.control.optionChip.minHeight,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.control.optionChip.radius,
-    backgroundColor: tokens.colors.panel,
-    paddingHorizontal: tokens.control.optionChip.paddingHorizontal,
-    paddingVertical: tokens.control.optionChip.paddingVertical,
-  },
-  optionChipSelected: {
-    borderColor: tokens.colors.accent,
-    backgroundColor: tokens.colors.goldTint,
-  },
-  optionChipText: {
-    color: tokens.colors.muted,
-    fontFamily: tokens.font.bodyMedium,
-  },
-  optionChipTextSelected: {
-    color: tokens.colors.ink,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    segment: {
+      minHeight: 44,
+      flexDirection: "row",
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.pill,
+      backgroundColor: t.color.surfaceSunk,
+      padding: 4,
+    },
+    segmentItemWrap: { flex: 1 },
+    segmentOption: {
+      minHeight: 36,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: t.radius.pill,
+      paddingHorizontal: 16,
+    },
+    segmentOptionSelected: {
+      backgroundColor: t.color.surfaceCard,
+      ...t.elevation.sm,
+    },
+    segmentText: {
+      color: t.color.textSecondary,
+      fontFamily: t.typography.family.uiSemi,
+    },
+    segmentTextSelected: { color: t.color.textPrimary },
+    optionCard: {
+      minHeight: 80,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.lg,
+      backgroundColor: t.color.surfaceCard,
+      padding: 16,
+    },
+    optionCardSelected: {
+      borderColor: t.color.action,
+      backgroundColor: t.color.selectedTint,
+    },
+    optionIcon: {
+      width: 40,
+      height: 40,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 12,
+      backgroundColor: t.color.selectedTint,
+    },
+    optionCopy: { flex: 1 },
+    optionTitle: {
+      fontFamily: t.typography.family.uiSemi,
+      fontSize: 16,
+      lineHeight: 20,
+      color: t.color.textPrimary,
+    },
+    optionSubtitle: { marginTop: 2 },
+    optionTick: {
+      width: 22,
+      height: 22,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 2,
+      borderColor: t.color.borderStrong,
+      borderRadius: t.radius.pill,
+    },
+    optionTickSelected: {
+      borderColor: t.color.action,
+      backgroundColor: t.color.action,
+    },
+    optionChip: {
+      minHeight: 42,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.sm,
+      backgroundColor: t.color.surfaceCard,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+    },
+    optionChipSelected: {
+      borderColor: t.color.action,
+      backgroundColor: t.color.selectedTint,
+    },
+    optionChipText: {
+      color: t.color.textSecondary,
+      fontFamily: t.typography.family.uiMedium,
+    },
+    optionChipTextSelected: { color: t.color.textPrimary },
+  });

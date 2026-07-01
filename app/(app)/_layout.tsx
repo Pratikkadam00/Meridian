@@ -2,12 +2,14 @@ import { Stack, type ErrorBoundaryProps } from "expo-router";
 import { StyleSheet, View } from "react-native";
 
 import { FloatingNav } from "@/features/navigation";
+import { useTheme } from "@/shared/theme/ThemeProvider";
 import { AppErrorFallback } from "@/shared/ui/AppErrorFallback";
 
 export default function AppLayout() {
+  const { theme } = useTheme();
   return (
     <View style={styles.root}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.color.bgApp } }} />
       <FloatingNav />
     </View>
   );

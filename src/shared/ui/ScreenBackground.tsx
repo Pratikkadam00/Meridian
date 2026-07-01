@@ -1,7 +1,6 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, type StyleProp, type ViewStyle } from "react-native";
+import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import { useTheme } from "@/shared/theme/ThemeProvider";
 
 export type ScreenBackgroundVariant = "screen" | "splash" | "flat";
 
@@ -11,29 +10,17 @@ type ScreenBackgroundProps = {
   style?: StyleProp<ViewStyle>;
 };
 
+// The new system is flat warm paper (light) / jade-ink (dark) — no decorative
+// glow. "splash" sits on the deep ink hero surface.
 export function ScreenBackground({ children, variant = "screen", style }: ScreenBackgroundProps) {
-  if (variant === "flat") {
-    return <LinearGradient colors={[tokens.colors.bg, tokens.colors.bg]} style={[styles.base, style]}>{children}</LinearGradient>;
-  }
+  const { theme } = useTheme();
+  const backgroundColor = variant === "splash" ? theme.color.surfaceInk : theme.color.bgApp;
 
-  if (variant === "splash") {
-    return (
-      <LinearGradient colors={[tokens.colors.bg, tokens.colors.pageGlow, tokens.colors.bg]} locations={[0, 0.42, 1]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={[styles.base, style]}>
-        {children}
-      </LinearGradient>
-    );
-  }
-
-  return (
-    <LinearGradient colors={[tokens.colors.pageGlow, tokens.colors.bg, tokens.colors.bg]} locations={[0, 0.45, 1]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={[styles.base, style]}>
-      {children}
-    </LinearGradient>
-  );
+  return <View style={[styles.base, { backgroundColor }, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   base: {
     flex: 1,
-    backgroundColor: tokens.colors.bg,
   },
 });

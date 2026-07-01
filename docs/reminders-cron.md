@@ -68,3 +68,33 @@ select * from cron.job;
 select cron.unschedule('meridian-send-due-reminders');
 select cron.unschedule('meridian-recompute-milestone-statuses');
 ```
+
+## 5. Verifying dispatch is actually running
+
+`phase_17_dispatch_observability.sql` adds a `dispatch_runs` log the edge
+function writes to on every invocation (success or failure) — no secrets
+involved, so it's a normal migration. Two ways to check:
+
+```sql
+-- Raw history (service role / SQL editor only)
+select * from public.dispatch_runs order by started_at desc limit 20;
+
+-- Summary status, callable by any authenticated app user
+select * from public.reminder_dispatch_health();
+```
+
+The app itself calls `reminder_dispatch_health()` on the Reminders screen and
+shows a warning banner if the last run is more than 45 minutes old (the cron
+interval is 15 minutes, so this catches a genuinely broken/unscheduled
+dispatcher, not just normal jitter). Until step 3 above is run for the first
+time, this will correctly show as stale.
+
+Optionally prune old rows periodically:
+
+```sql
+select cron.schedule(
+  'meridian-prune-dispatch-runs',
+  '0 3 * * 0',
+  $$ select public.prune_dispatch_runs(interval '30 days'); $$
+);
+```

@@ -1,0 +1,1 @@
+export { DocumentVaultScreen } from "./DocumentVaultScreen";

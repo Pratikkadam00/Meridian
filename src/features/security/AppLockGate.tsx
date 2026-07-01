@@ -1,9 +1,10 @@
 import { LockKeyhole } from "lucide-react-native";
-import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
+import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
-import { Platform, StyleSheet, View } from "react-native";
+import { AppState, Platform, StyleSheet, View } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 import { GoldButton } from "@/shared/ui/Button";
 import { Screen } from "@/shared/ui/Screen";
 import { Text } from "@/shared/ui/Text";
@@ -19,6 +20,8 @@ type LockState = "checking" | "locked" | "unlocked";
  */
 export function AppLockGate({ children }: PropsWithChildren) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [state, setState] = useState<LockState>(Platform.OS === "web" ? "unlocked" : "checking");
 
   const attempt = useCallback(async () => {
@@ -36,6 +39,8 @@ export function AppLockGate({ children }: PropsWithChildren) {
     }
   }, []);
 
+  const backgroundedAt = useRef<number | null>(null);
+
   useEffect(() => {
     // One-time launch auth check; attempt() drives its own state machine.
     if (Platform.OS !== "web") {
@@ -44,19 +49,44 @@ export function AppLockGate({ children }: PropsWithChildren) {
     }
   }, [attempt]);
 
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      return undefined;
+    }
+    // Re-lock when the app returns to the foreground after being away beyond a
+    // short grace window, so an already-open phone that's been backgrounded
+    // doesn't resume straight into broker data. attempt() re-checks the flag, so
+    // this is a no-op when the lock is disabled.
+    const RELOCK_GRACE_MS = 30_000;
+    const subscription = AppState.addEventListener("change", (next) => {
+      if (next === "background" || next === "inactive") {
+        backgroundedAt.current = Date.now();
+        return;
+      }
+      if (next === "active" && backgroundedAt.current != null) {
+        const awayMs = Date.now() - backgroundedAt.current;
+        backgroundedAt.current = null;
+        if (awayMs >= RELOCK_GRACE_MS) {
+          void attempt();
+        }
+      }
+    });
+    return () => subscription.remove();
+  }, [attempt]);
+
   if (state === "unlocked") {
     return <>{children}</>;
   }
 
   if (state === "checking") {
-    // Obsidian canvas only — brief, avoids a white flash during the prompt.
+    // Warm-paper / jade-ink canvas only — brief, avoids a flash during the prompt.
     return <Screen contentStyle={styles.blank}><View /></Screen>;
   }
 
   return (
     <Screen contentStyle={styles.locked}>
       <View style={styles.iconHero}>
-        <LockKeyhole size={34} color={tokens.colors.goldBright} strokeWidth={2} />
+        <LockKeyhole size={34} color={theme.color.action} strokeWidth={2} />
       </View>
       <Text variant="h1" style={styles.title}>
         {t("lock.title")}
@@ -69,31 +99,32 @@ export function AppLockGate({ children }: PropsWithChildren) {
   );
 }
 
-const styles = StyleSheet.create({
-  blank: {
-    flex: 1,
-  },
-  locked: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconHero: {
-    width: 84,
-    height: 84,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 24,
-    backgroundColor: tokens.colors.goldTint,
-    marginBottom: tokens.spacing[22],
-  },
-  title: {
-    textAlign: "center",
-  },
-  body: {
-    textAlign: "center",
-    maxWidth: 300,
-    marginTop: tokens.spacing[12],
-    marginBottom: tokens.spacing[22],
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    blank: {
+      flex: 1,
+    },
+    locked: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iconHero: {
+      width: 84,
+      height: 84,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: t.radius.xl,
+      backgroundColor: t.color.selectedTint,
+      marginBottom: t.space[5],
+    },
+    title: {
+      textAlign: "center",
+    },
+    body: {
+      textAlign: "center",
+      maxWidth: 300,
+      marginTop: t.space[3],
+      marginBottom: t.space[5],
+    },
+  });

@@ -4,6 +4,7 @@ import { StyleSheet, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 
 import { useAuth } from "@/features/auth";
+import { useTheme } from "@/shared/theme/ThemeProvider";
 
 import { hasSeenLaunchSplash, setLaunchSplashSeen } from "./launchSplashStorage";
 
@@ -17,10 +18,13 @@ type LaunchSplashGateProps = PropsWithChildren<{
 
 export function LaunchSplashGate({ children, fontsReady }: LaunchSplashGateProps) {
   const { isLoading } = useAuth();
+  const { hydrated } = useTheme();
   const reducedMotion = useReducedMotion();
   const [showLaunchSplash, setShowLaunchSplash] = useState(false);
   const [canRenderApp, setCanRenderApp] = useState(false);
-  const bootReady = fontsReady && !isLoading;
+  // Wait for the persisted theme preference too, so the first painted frame is
+  // already in the user's chosen Light/Dark theme (no flash of the wrong one).
+  const bootReady = fontsReady && !isLoading && hydrated;
   const splashDuration = useMemo(() => (reducedMotion ? 360 : 1_200), [reducedMotion]);
 
   useEffect(() => {

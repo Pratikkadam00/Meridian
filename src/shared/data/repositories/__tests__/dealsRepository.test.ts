@@ -4,7 +4,9 @@ import {
   mapSupabaseDetail,
   markMilestonePaidInDetail,
   paidPercent,
+  PreviewDealsRepository,
   withMilestoneRollup,
+  type CommissionTrancheInput,
   type DealDetail,
   type DealPaymentMilestone,
   type SupabaseDealDetailRow,
@@ -51,6 +53,7 @@ function dealDetail(milestones: DealPaymentMilestone[], totalValueAed = "1000000
     handoverLabel: "Q4 2026",
     paidToDateAed: "0",
     milestones,
+    commission: { ratePercent: null, totalAed: "0", receivedAed: "0", outstandingAed: "0", tranches: [] },
   };
 }
 
@@ -63,6 +66,8 @@ describe("mapSupabaseDetail — status re-derivation on read", () => {
       buyer_name: "Omar Al-Farsi",
       total_value_aed: "1000000",
       handover_estimate: null,
+      commission_percent: null,
+      commission_tranches: [],
       developers: { name: "Emaar" },
       milestones: [
         // paid stays paid
@@ -94,6 +99,8 @@ describe("mapSupabaseDetail — status re-derivation on read", () => {
       buyer_name: "Maya",
       total_value_aed: "500000",
       handover_estimate: null,
+      commission_percent: null,
+      commission_tranches: [],
       developers: { name: "Sobha" },
       milestones: [
         { id: "m1", seq: 1, label: "Booking", trigger_type: "booking", trigger_value: null, percent: "20", amount_aed: "100000", due_date: ymd(-5), paid_date: ymd(-5), status: "overdue" },
@@ -101,6 +108,82 @@ describe("mapSupabaseDetail — status re-derivation on read", () => {
     };
 
     expect(mapSupabaseDetail(row).milestones[0].status).toBe("paid");
+  });
+});
+
+describe("commission tracking", () => {
+  it("derives commission total from rate, and reconciles received vs outstanding from tranches", () => {
+    const row: SupabaseDealDetailRow = {
+      id: "d3",
+      project_name: "Canal Heights",
+      unit: "1BR",
+      buyer_name: "Layla",
+      total_value_aed: "2000000",
+      handover_estimate: null,
+      commission_percent: "3", // 3% of 2,000,000 = 60,000 total commission
+      developers: { name: "DAMAC" },
+      milestones: [],
+      commission_tranches: [
+        { id: "c2", seq: 2, label: "On handover", percent: "50", amount_aed: "30000", status: "pending", expected_date: null, received_date: null },
+        { id: "c1", seq: 1, label: "On booking", percent: "50", amount_aed: "30000", status: "received", expected_date: null, received_date: ymd(-10) },
+      ],
+    };
+
+    const { commission } = mapSupabaseDetail(row);
+
+    expect(commission.ratePercent).toBe("3");
+    expect(commission.totalAed).toBe("60000"); // 2,000,000 * 3%
+    expect(commission.receivedAed).toBe("30000"); // only the received tranche
+    expect(commission.outstandingAed).toBe("30000");
+    expect(commission.tranches.map((t) => t.label)).toEqual(["On booking", "On handover"]); // sorted by seq
+  });
+});
+
+describe("PreviewDealsRepository.setDealCommission — editing a schedule must not wipe received tranches", () => {
+  it("preserves status and received date for a tranche whose id round-trips, even though the payload never carries status", async () => {
+    const repo = new PreviewDealsRepository();
+    const before = await repo.getDealDetail("preview-marina-vista");
+    const receivedTranche = before.commission.tranches.find((tranche) => tranche.status === "received");
+    expect(receivedTranche).toBeDefined();
+
+    // Mirrors exactly what CommissionEditorScreen sends: id/label/percent/
+    // amountAed/expectedDate only — no status, no receivedDate.
+    const payload: CommissionTrancheInput[] = before.commission.tranches.map((tranche) => ({
+      id: tranche.id,
+      label: tranche.id === receivedTranche!.id ? `${tranche.label} (renamed)` : tranche.label,
+      percent: tranche.percent,
+      amountAed: tranche.amountAed,
+      expectedDate: null,
+    }));
+
+    const after = await repo.setDealCommission("preview-marina-vista", before.commission.ratePercent, payload);
+    const stillReceived = after.commission.tranches.find((tranche) => tranche.id === receivedTranche!.id);
+
+    expect(stillReceived?.status).toBe("received");
+    expect(stillReceived?.receivedDateLabel).toBe(receivedTranche!.receivedDateLabel);
+    expect(stillReceived?.label).toBe(`${receivedTranche!.label} (renamed)`);
+  });
+
+  it("starts a brand-new tranche (no id) as pending, without touching existing ones", async () => {
+    const repo = new PreviewDealsRepository();
+    const before = await repo.getDealDetail("preview-marina-vista");
+    const existingIds = new Set(before.commission.tranches.map((tranche) => tranche.id));
+
+    const payload: CommissionTrancheInput[] = [
+      ...before.commission.tranches.map((tranche) => ({ id: tranche.id, label: tranche.label, percent: tranche.percent, amountAed: tranche.amountAed, expectedDate: null })),
+      { id: null, label: "Referral bonus", percent: "0", amountAed: "0", expectedDate: null },
+    ];
+
+    const after = await repo.setDealCommission("preview-marina-vista", before.commission.ratePercent, payload);
+    const newTranche = after.commission.tranches.find((tranche) => !existingIds.has(tranche.id));
+
+    expect(newTranche?.label).toBe("Referral bonus");
+    expect(newTranche?.status).toBe("pending");
+    expect(newTranche?.receivedDateLabel).toBeNull();
+    // Every previously-received tranche is still received.
+    expect(after.commission.tranches.filter((tranche) => existingIds.has(tranche.id) && tranche.status === "received")).toHaveLength(
+      before.commission.tranches.filter((tranche) => tranche.status === "received").length,
+    );
   });
 });
 

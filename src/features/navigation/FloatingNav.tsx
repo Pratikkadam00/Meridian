@@ -1,6 +1,7 @@
 import { router, usePathname, type Href } from "expo-router";
 import { Bell, Home, Layers3, UserRound } from "lucide-react-native";
 
+import { useI18nControls } from "@/shared/lib/i18n/I18nProvider";
 import { FloatingNav as FloatingNavShell, type FloatingNavItem } from "@/shared/ui/FloatingNav";
 
 type DestinationKey = "home" | "deals" | "reminders" | "settings";
@@ -57,11 +58,12 @@ function getActiveKey(pathname: string): DestinationKey | null {
 }
 
 function shouldHideNav(pathname: string) {
-  return pathname.startsWith("/new-deal") || pathname.startsWith("/deal/");
+  return pathname.startsWith("/new-deal") || pathname.startsWith("/deal/") || pathname.startsWith("/commission") || pathname.startsWith("/documents");
 }
 
 export function FloatingNav() {
   const pathname = usePathname();
+  const { isRTL } = useI18nControls();
   const activeKey = getActiveKey(pathname);
 
   function goToDestination(key: DestinationKey) {
@@ -80,6 +82,7 @@ export function FloatingNav() {
     <FloatingNavShell
       activeKey={activeKey}
       hidden={shouldHideNav(pathname)}
+      isRTL={isRTL}
       items={destinations}
       onFabPress={() => router.push("/new-deal")}
       onItemPress={(item) => goToDestination(item.key)}

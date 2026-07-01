@@ -33,6 +33,13 @@ const deviceIntegrityRequired = process.env.EXPO_PUBLIC_DEVICE_INTEGRITY_REQUIRE
  * build plus a server verifier — see docs/security-hardening.md. Findings are
  * honest about which is which, and `*_REQUIRED` flags escalate the unmet ones to
  * `critical`, which blocks the app when enforcement mode is `block`.
+ *
+ * IMPORTANT: `*_REQUIRED` flags do NOTHING on their own — they only gate the app
+ * when EXPO_PUBLIC_SECURITY_ENFORCEMENT_MODE is also `block`. In the default
+ * `report` mode the app always runs. We surface a warning finding below when a
+ * `*_REQUIRED` flag is set without `block` so the contradiction is never silent.
+ * (Do not flip the default to `block` until real certificate pins ship — see
+ * the cert-pinning finding — or the app would refuse to start in release.)
  */
 export function evaluateSecurityPosture(): SecurityPosture {
   const findings: SecurityFinding[] = [
@@ -94,6 +101,17 @@ export function evaluateSecurityPosture(): SecurityPosture {
       control: "certificate_pinning",
       severity: nativePinningRequired ? "critical" : "warning",
       message: "Add real SPKI pin hashes to the network-security-config to activate pinning (see docs/security-hardening.md).",
+    });
+  }
+
+  // Surface the silent-contradiction footgun: a *_REQUIRED flag is set but the
+  // app is in advisory `report` mode, so the requirement is not actually enforced.
+  if (enforcementMode === "report" && (nativePinningRequired || deviceIntegrityRequired)) {
+    findings.push({
+      control: "network_policy",
+      severity: "warning",
+      message:
+        "A *_REQUIRED security flag is set but EXPO_PUBLIC_SECURITY_ENFORCEMENT_MODE is 'report' — the requirement is advisory and does not block until mode is 'block'.",
     });
   }
 

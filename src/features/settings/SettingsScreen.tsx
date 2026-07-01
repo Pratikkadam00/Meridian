@@ -1,9 +1,10 @@
+import * as Haptics from "expo-haptics";
 import * as LocalAuthentication from "expo-local-authentication";
-import { router } from "expo-router";
-import { Bell, Fingerprint, Languages, LogOut, Trash2 } from "lucide-react-native";
+import { router, type Href } from "expo-router";
+import { Bell, ChartBar, Fingerprint, Languages, LogOut, Palette, Trash2, Users } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Linking, ScrollView, StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/features/auth/AuthProvider";
 import { registerForReminderPush } from "@/features/reminders/notificationRegistration";
@@ -11,24 +12,32 @@ import { authenticateAppLock, hasBiometricHardware, isBiometricLockEnabled, setB
 import { useRepositories } from "@/shared/data/RepositoryProvider";
 import { useI18nControls } from "@/shared/lib/i18n/I18nProvider";
 import { captureNonFatalError } from "@/shared/observability/sentry";
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles, type ThemePreference } from "@/shared/theme/ThemeProvider";
 import { Button, GhostButton, GoldButton } from "@/shared/ui/Button";
 import { Screen } from "@/shared/ui/Screen";
+import { SegmentedControl } from "@/shared/ui/SelectableControls";
 import { Surface } from "@/shared/ui/Surface";
 import { Text } from "@/shared/ui/Text";
 
+const THEME_OPTIONS: readonly ThemePreference[] = ["system", "light", "dark"];
+
 export function SettingsScreen() {
   const { t } = useTranslation();
-  const { profile, signOut, deleteAccount } = useAuth();
+  const { profile, signOut, deleteAccount, createOrgInvite } = useAuth();
   const { reminders } = useRepositories();
-  const { language, setLanguage } = useI18nControls();
+  const { language, setLanguage, isRTL } = useI18nControls();
+  const { theme, preference, setPreference } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [lockEnabled, setLockEnabled] = useState(false);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [lockMessage, setLockMessage] = useState<string | null>(null);
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [busy, setBusy] = useState<"push" | "lock" | "signout" | "delete" | null>(null);
+  const [busy, setBusy] = useState<"push" | "lock" | "signout" | "delete" | "invite" | null>(null);
+  const [invite, setInvite] = useState<{ code: string; expiresAtLabel: string } | null>(null);
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -91,6 +100,29 @@ export function SettingsScreen() {
     }
   }
 
+  async function handleCreateInvite() {
+    setInviteMessage(null);
+    setBusy("invite");
+    try {
+      const nextInvite = await createOrgInvite();
+      setInvite(nextInvite);
+    } catch (error) {
+      captureNonFatalError("settings_create_invite_failed", error, { surface: "settings" });
+      setInviteMessage(error instanceof Error ? error.message : t("settings.inviteError"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleShareInvite() {
+    if (!invite) {
+      return;
+    }
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+    const message = t("settings.inviteShareMessage", { code: invite.code });
+    void Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
+  }
+
   async function handleSignOut() {
     setBusy("signout");
     try {
@@ -124,8 +156,14 @@ export function SettingsScreen() {
     }
   }
 
+  const themeLabels: Record<ThemePreference, string> = {
+    system: t("settings.themeSystem"),
+    light: t("settings.themeLight"),
+    dark: t("settings.themeDark"),
+  };
+
   return (
-    <Screen>
+    <Screen contentStyle={isRTL && styles.rtl}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <Text variant="eyebrow">{t("settings.eyebrow")}</Text>
         <Text variant="h1" style={styles.title}>
@@ -153,7 +191,39 @@ export function SettingsScreen() {
 
         <Surface style={styles.card}>
           <View style={styles.rowHeader}>
-            <Bell size={18} color={tokens.colors.accent} strokeWidth={2.1} />
+            <ChartBar size={18} color={theme.color.action} strokeWidth={2.1} />
+            <Text variant="cardTitle" style={styles.rowTitle}>
+              {t("settings.reportsTitle")}
+            </Text>
+          </View>
+          <Text variant="caption" muted style={styles.rowBody}>
+            {t("settings.reportsBody")}
+          </Text>
+          <GhostButton label={t("settings.reportsOpen")} onPress={() => router.push("/reports" as unknown as Href)} />
+        </Surface>
+
+        <Surface style={styles.card}>
+          <View style={styles.rowHeader}>
+            <Palette size={18} color={theme.color.action} strokeWidth={2.1} />
+            <Text variant="cardTitle" style={styles.rowTitle}>
+              {t("settings.appearanceTitle")}
+            </Text>
+          </View>
+          <Text variant="caption" muted style={styles.rowBody}>
+            {t("settings.appearanceBody")}
+          </Text>
+          <SegmentedControl
+            options={THEME_OPTIONS}
+            labels={themeLabels}
+            value={preference}
+            onChange={setPreference}
+            accessibilityLabel={t("settings.appearanceTitle")}
+          />
+        </Surface>
+
+        <Surface style={styles.card}>
+          <View style={styles.rowHeader}>
+            <Bell size={18} color={theme.color.action} strokeWidth={2.1} />
             <Text variant="cardTitle" style={styles.rowTitle}>
               {t("settings.notificationsTitle")}
             </Text>
@@ -171,7 +241,39 @@ export function SettingsScreen() {
 
         <Surface style={styles.card}>
           <View style={styles.rowHeader}>
-            <Fingerprint size={18} color={tokens.colors.accent} strokeWidth={2.1} />
+            <Users size={18} color={theme.color.action} strokeWidth={2.1} />
+            <Text variant="cardTitle" style={styles.rowTitle}>
+              {t("settings.inviteTitle")}
+            </Text>
+          </View>
+          <Text variant="caption" muted style={styles.rowBody}>
+            {t("settings.inviteBody")}
+          </Text>
+          {invite ? (
+            <>
+              <View style={styles.inviteCodeRow}>
+                <Text variant="mono" style={styles.inviteCode}>
+                  {invite.code}
+                </Text>
+                <Text variant="caption" muted>
+                  {t("settings.inviteExpires", { date: invite.expiresAtLabel })}
+                </Text>
+              </View>
+              <GhostButton label={t("settings.inviteShare")} onPress={handleShareInvite} />
+            </>
+          ) : (
+            <GhostButton label={busy === "invite" ? t("settings.inviteCreating") : t("settings.inviteCreate")} disabled={busy !== null} onPress={handleCreateInvite} />
+          )}
+          {inviteMessage ? (
+            <Text variant="caption" muted style={styles.message}>
+              {inviteMessage}
+            </Text>
+          ) : null}
+        </Surface>
+
+        <Surface style={styles.card}>
+          <View style={styles.rowHeader}>
+            <Fingerprint size={18} color={theme.color.action} strokeWidth={2.1} />
             <Text variant="cardTitle" style={styles.rowTitle}>
               {t("settings.lockTitle")}
             </Text>
@@ -189,7 +291,7 @@ export function SettingsScreen() {
 
         <Surface style={styles.card}>
           <View style={styles.rowHeader}>
-            <Languages size={18} color={tokens.colors.accent} strokeWidth={2.1} />
+            <Languages size={18} color={theme.color.action} strokeWidth={2.1} />
             <Text variant="cardTitle" style={styles.rowTitle}>
               {t("settings.languageTitle")}
             </Text>
@@ -205,7 +307,7 @@ export function SettingsScreen() {
 
         <View style={styles.signOutWrap}>
           <View style={styles.signOutRow}>
-            <LogOut size={18} color={tokens.colors.over} strokeWidth={2.1} />
+            <LogOut size={18} color={theme.status.overdue.solid} strokeWidth={2.1} />
             <Text variant="caption" muted style={styles.rowTitle}>
               {t("settings.signOutRowLabel")}
             </Text>
@@ -215,7 +317,7 @@ export function SettingsScreen() {
 
         <Surface style={styles.card}>
           <View style={styles.rowHeader}>
-            <Trash2 size={18} color={tokens.colors.over} strokeWidth={2.1} />
+            <Trash2 size={18} color={theme.status.overdue.solid} strokeWidth={2.1} />
             <Text variant="cardTitle" style={[styles.rowTitle, styles.dangerTitle]}>
               {t("settings.dangerTitle")}
             </Text>
@@ -241,58 +343,75 @@ export function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: {
-    paddingBottom: tokens.spacing[32],
-    gap: tokens.spacing[12],
-  },
-  title: {
-    marginTop: tokens.spacing[8],
-    marginBottom: tokens.spacing[8],
-  },
-  card: {
-    padding: tokens.spacing[16],
-    gap: tokens.spacing[8],
-  },
-  cardValue: {
-    fontSize: 18,
-    lineHeight: 22,
-  },
-  role: {
-    marginTop: tokens.spacing[4],
-  },
-  rowHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[8],
-  },
-  rowTitle: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  dangerTitle: {
-    color: tokens.colors.over,
-  },
-  rowBody: {
-    marginBottom: tokens.spacing[4],
-  },
-  message: {
-    marginTop: tokens.spacing[4],
-  },
-  languageRow: {
-    flexDirection: "row",
-    gap: tokens.spacing[8],
-  },
-  languageButton: {
-    flex: 1,
-  },
-  signOutWrap: {
-    marginTop: tokens.spacing[8],
-    gap: tokens.spacing[12],
-  },
-  signOutRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[8],
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    rtl: {
+      direction: "rtl",
+    },
+    scroll: {
+      paddingBottom: t.sizing.tabBarClearance,
+      gap: t.space[3],
+    },
+    title: {
+      marginTop: t.space[2],
+      marginBottom: t.space[2],
+    },
+    card: {
+      padding: t.space[4],
+      gap: t.space[2],
+    },
+    cardValue: {
+      fontSize: 18,
+      lineHeight: 22,
+    },
+    role: {
+      marginTop: t.space[1],
+    },
+    rowHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: t.space[2],
+    },
+    rowTitle: {
+      fontSize: 15,
+      lineHeight: 20,
+    },
+    dangerTitle: {
+      color: t.status.overdue.text,
+    },
+    rowBody: {
+      marginBottom: t.space[1],
+    },
+    message: {
+      marginTop: t.space[1],
+    },
+    inviteCodeRow: {
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.sm,
+      backgroundColor: t.color.surfaceSunk,
+      padding: t.space[3],
+      alignItems: "center",
+      gap: t.space[1],
+    },
+    inviteCode: {
+      fontSize: 20,
+      letterSpacing: 2,
+    },
+    languageRow: {
+      flexDirection: "row",
+      gap: t.space[2],
+    },
+    languageButton: {
+      flex: 1,
+    },
+    signOutWrap: {
+      marginTop: t.space[2],
+      gap: t.space[3],
+    },
+    signOutRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: t.space[2],
+    },
+  });

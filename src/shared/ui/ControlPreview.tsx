@@ -2,7 +2,8 @@ import { Bell, Building2, Check, ChevronLeft, Home, Layers3, MoreHorizontal, Plu
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 
 import { Button } from "./Button";
 import { Fab } from "./Fab";
@@ -25,6 +26,8 @@ const previewNavItems: FloatingNavItem<PreviewNavKey>[] = [
 ];
 
 export function ControlPreview() {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [volume, setVolume] = useState<(typeof volumeOptions)[number]>("1-5");
   const [activeNav, setActiveNav] = useState<PreviewNavKey>("home");
 
@@ -36,7 +39,7 @@ export function ControlPreview() {
           Button and control system
         </Text>
         <Text variant="body" muted style={styles.lede}>
-          Midnight controls rendered from shared UI components.
+          Jade/amber controls rendered from shared UI components.
         </Text>
 
         <PreviewSection eyebrow="01" title="Button variants">
@@ -109,10 +112,10 @@ export function ControlPreview() {
           </Surface>
         </PreviewSection>
 
-        <PreviewSection eyebrow="07" title="Floating nav">
+        <PreviewSection eyebrow="07" title="Bottom tab bar">
           <View style={styles.navMock}>
             <Surface variant="card" style={styles.navCard}>
-              <Check size={22} color={tokens.colors.accent} />
+              <Check size={22} color={theme.color.action} />
             </Surface>
             <FloatingNav activeKey={activeNav} items={previewNavItems} onFabPress={() => undefined} onItemPress={(item) => setActiveNav(item.key)} />
           </View>
@@ -123,6 +126,7 @@ export function ControlPreview() {
 }
 
 function PreviewSection({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -138,83 +142,84 @@ function PreviewSection({ eyebrow, title, children }: { eyebrow: string; title: 
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    paddingBottom: tokens.spacing[32],
-  },
-  content: {
-    paddingBottom: tokens.layout.appScreenBottomPadding,
-  },
-  title: {
-    marginTop: tokens.spacing[8],
-  },
-  lede: {
-    marginTop: tokens.spacing[8],
-    marginBottom: tokens.spacing[22],
-  },
-  section: {
-    marginBottom: tokens.spacing[32],
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: tokens.spacing[12],
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.line,
-    paddingBottom: tokens.spacing[8],
-    marginBottom: tokens.spacing[16],
-  },
-  sectionNumber: {
-    color: tokens.colors.accent,
-  },
-  sectionTitle: {
-    flex: 1,
-    fontSize: 19,
-    lineHeight: 24,
-  },
-  stack: {
-    gap: tokens.spacing[12],
-  },
-  row: {
-    alignItems: "flex-start",
-    gap: tokens.spacing[12],
-  },
-  iconRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-  },
-  chips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 9,
-  },
-  surface: {
-    padding: tokens.spacing[16],
-  },
-  surfaceTitle: {
-    fontSize: 18,
-    lineHeight: 23,
-    marginBottom: tokens.spacing[8],
-  },
-  navMock: {
-    position: "relative",
-    height: 220,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.deck,
-    backgroundColor: tokens.colors.bg,
-  },
-  navCard: {
-    position: "absolute",
-    top: tokens.spacing[22],
-    right: tokens.spacing[22],
-    left: tokens.spacing[22],
-    height: 92,
-    alignItems: "center",
-    justifyContent: "center",
-    opacity: 0.74,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    screen: {
+      paddingBottom: t.space[8],
+    },
+    content: {
+      paddingBottom: t.sizing.tabBarClearance,
+    },
+    title: {
+      marginTop: t.space[2],
+    },
+    lede: {
+      marginTop: t.space[2],
+      marginBottom: t.space[5],
+    },
+    section: {
+      marginBottom: t.space[8],
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      gap: t.space[3],
+      borderBottomWidth: 1,
+      borderBottomColor: t.color.borderHair,
+      paddingBottom: t.space[2],
+      marginBottom: t.space[4],
+    },
+    sectionNumber: {
+      color: t.color.actionText,
+    },
+    sectionTitle: {
+      flex: 1,
+      fontSize: 19,
+      lineHeight: 24,
+    },
+    stack: {
+      gap: t.space[3],
+    },
+    row: {
+      alignItems: "flex-start",
+      gap: t.space[3],
+    },
+    iconRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: t.space[3],
+    },
+    chips: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 9,
+    },
+    surface: {
+      padding: t.space[4],
+    },
+    surfaceTitle: {
+      fontSize: 18,
+      lineHeight: 23,
+      marginBottom: t.space[2],
+    },
+    navMock: {
+      position: "relative",
+      height: 220,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.xl,
+      backgroundColor: t.color.bgApp,
+    },
+    navCard: {
+      position: "absolute",
+      top: t.space[5],
+      right: t.space[5],
+      left: t.space[5],
+      height: 92,
+      alignItems: "center",
+      justifyContent: "center",
+      opacity: 0.74,
+    },
+  });

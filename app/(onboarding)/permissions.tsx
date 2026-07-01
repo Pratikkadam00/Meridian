@@ -10,7 +10,8 @@ import { OnboardingStepView, persistOnboardingStep, useOnboardingStepTracking } 
 import { hasBiometricHardware, setBiometricLockEnabled } from "@/features/security/appLock";
 import { trackAnalyticsEvent } from "@/shared/observability/analytics";
 import { captureNonFatalError } from "@/shared/observability/sentry";
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 import { GoldButton, GhostButton } from "@/shared/ui/Button";
 import { ProgressDots } from "@/shared/ui/ProgressDots";
 import { Screen } from "@/shared/ui/Screen";
@@ -18,6 +19,8 @@ import { Text } from "@/shared/ui/Text";
 
 export default function PermissionsScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [message, setMessage] = useState<string | null>(null);
   const [isRequesting, setIsRequesting] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -89,7 +92,7 @@ export default function PermissionsScreen() {
         <ProgressDots count={5} activeIndex={3} />
         <View style={styles.center}>
           <View style={styles.iconHero}>
-            <Bell size={38} color={tokens.colors.goldBright} strokeWidth={2} />
+            <Bell size={38} color={theme.color.action} strokeWidth={2} />
           </View>
           <Text variant="h1" style={styles.title}>
             {t("permissions.title")}
@@ -99,7 +102,7 @@ export default function PermissionsScreen() {
           </Text>
 
           <View style={styles.lockPanel}>
-            <LockKeyhole size={18} color={tokens.colors.accent} strokeWidth={2.1} />
+            <LockKeyhole size={18} color={theme.color.action} strokeWidth={2.1} />
             <Text variant="caption" muted style={styles.lockCopy}>
               {t("permissions.lockCopy")}
             </Text>
@@ -128,52 +131,53 @@ export default function PermissionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    justifyContent: "space-between",
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconHero: {
-    width: 84,
-    height: 84,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 24,
-    backgroundColor: tokens.colors.goldTint,
-    marginBottom: 26,
-  },
-  title: {
-    textAlign: "center",
-    fontSize: 30,
-    lineHeight: 34,
-  },
-  lede: {
-    maxWidth: 310,
-    textAlign: "center",
-    marginTop: tokens.spacing[16],
-  },
-  lockPanel: {
-    width: "100%",
-    alignItems: "center",
-    gap: tokens.spacing[8],
-    marginTop: tokens.spacing[32],
-  },
-  lockCopy: {
-    textAlign: "center",
-  },
-  message: {
-    color: tokens.colors.due,
-    textAlign: "center",
-    marginTop: tokens.spacing[16],
-  },
-  actions: {
-    gap: tokens.spacing[12],
-  },
-  disabled: {
-    opacity: 0.52,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    screen: {
+      justifyContent: "space-between",
+    },
+    center: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iconHero: {
+      width: 84,
+      height: 84,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: t.radius.xl,
+      backgroundColor: t.color.selectedTint,
+      marginBottom: t.space[6],
+    },
+    title: {
+      textAlign: "center",
+      fontSize: 30,
+      lineHeight: 34,
+    },
+    lede: {
+      maxWidth: 310,
+      textAlign: "center",
+      marginTop: t.space[4],
+    },
+    lockPanel: {
+      width: "100%",
+      alignItems: "center",
+      gap: t.space[2],
+      marginTop: t.space[8],
+    },
+    lockCopy: {
+      textAlign: "center",
+    },
+    message: {
+      color: t.color.accentText,
+      textAlign: "center",
+      marginTop: t.space[4],
+    },
+    actions: {
+      gap: t.space[3],
+    },
+    disabled: {
+      opacity: 0.52,
+    },
+  });

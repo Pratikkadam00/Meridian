@@ -1,7 +1,7 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator, StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 
 import { PressableScale } from "./PressableScale";
 import { Text } from "./Text";
@@ -14,6 +14,7 @@ export type ButtonProps = Omit<PressableProps, "children" | "style"> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   block?: boolean;
+  /** Retained for API compatibility; danger is always a solid fill now. */
   solid?: boolean;
   loading?: boolean;
   loadingLabel?: string;
@@ -22,12 +23,19 @@ export type ButtonProps = Omit<PressableProps, "children" | "style"> & {
   style?: StyleProp<ViewStyle>;
 };
 
+// New system control heights/radius (tokens/spacing.css): lg 56, md 48, sm 36.
+const SIZE: Record<ButtonSize, { height: number; paddingHorizontal: number; fontSize: number; radius: number }> = {
+  lg: { height: 56, paddingHorizontal: 22, fontSize: 16, radius: 14 },
+  md: { height: 48, paddingHorizontal: 18, fontSize: 15, radius: 14 },
+  sm: { height: 36, paddingHorizontal: 14, fontSize: 13, radius: 14 },
+};
+
 export function Button({
   label,
   variant = "gold",
   size = "lg",
   block = false,
-  solid = false,
+  solid: _solid,
   loading = false,
   loadingLabel,
   leftIcon,
@@ -37,50 +45,35 @@ export function Button({
   style,
   ...props
 }: ButtonProps) {
-  const sizeToken = tokens.control.button.sizes[size];
-  const ringRadius = sizeToken.radius + tokens.control.focusRingOffset;
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const sz = SIZE[size];
   const visualLabel = loading ? loadingLabel ?? label : label;
-  const hitSlopSize = Math.max(0, (tokens.control.minTouchTarget - sizeToken.minHeight) / 2);
-  const hitSlop = hitSlopSize > 0 ? { top: hitSlopSize, right: hitSlopSize, bottom: hitSlopSize, left: hitSlopSize } : undefined;
-  const isGold = variant === "gold";
-  const isDangerSolid = variant === "danger" && solid;
-  const textStyle = [
-    styles.label,
-    {
-      color: labelColor(variant, solid),
-      fontSize: sizeToken.fontSize,
-      lineHeight: sizeToken.lineHeight,
-    },
-  ];
+  const labelColor = buttonLabelColor(theme, variant);
+  const isPrimary = variant === "gold";
+  const isBusy = Boolean(disabled) || loading;
 
   return (
     <PressableScale
       {...props}
       accessibilityLabel={accessibilityLabel ?? label}
       busy={loading}
-      disabled={Boolean(disabled)}
-      focusRadius={ringRadius}
+      disabled={isBusy}
+      focusRadius={sz.radius + 3}
       haptic
-      hitSlop={hitSlop}
       outerStyle={[block && styles.block, style]}
-      pressOverlayColor={isGold ? tokens.colors.goldBright : undefined}
-      pressScale={tokens.control.button.pressScale}
+      pressOverlayColor={isPrimary ? theme.color.actionPress : undefined}
+      pressScale={0.98}
       pressableStyle={[
         styles.base,
         styles[variant],
-        isDangerSolid && styles.dangerSolid,
-        {
-          minHeight: sizeToken.minHeight,
-          borderRadius: sizeToken.radius,
-          paddingHorizontal: sizeToken.paddingHorizontal,
-          paddingVertical: sizeToken.paddingVertical,
-        },
+        { minHeight: sz.height, borderRadius: sz.radius, paddingHorizontal: sz.paddingHorizontal },
+        isBusy && styles.disabled,
       ]}
     >
-      {(isGold || isDangerSolid) && <ButtonFill variant={variant} solid={solid} radius={sizeToken.radius} />}
       <View style={styles.content}>
-        {loading ? <ActivityIndicator color={spinnerColor(variant, solid)} size="small" /> : leftIcon}
-        <Text variant="caption" style={textStyle}>
+        {loading ? <ActivityIndicator color={labelColor} size="small" /> : leftIcon}
+        <Text variant="caption" style={[styles.label, { color: labelColor, fontSize: sz.fontSize }]}>
           {visualLabel}
         </Text>
         {!loading ? rightIcon : null}
@@ -97,91 +90,60 @@ export function GhostButton(props: Omit<ButtonProps, "variant">) {
   return <Button {...props} block={props.block ?? true} variant="ghost" />;
 }
 
-function ButtonFill({ variant, solid, radius }: { variant: ButtonVariant; solid: boolean; radius: number }) {
+function buttonLabelColor(theme: MeridianTheme, variant: ButtonVariant): string {
   if (variant === "gold") {
-    return (
-      <LinearGradient
-        colors={[tokens.colors.goldBright, tokens.colors.accent2]}
-        start={{ x: 0.25, y: 0.07 }}
-        end={{ x: 0.75, y: 0.93 }}
-        style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
-      />
-    );
+    return theme.color.textOnBrand;
   }
-
-  if (variant === "danger" && solid) {
-    return <View style={[StyleSheet.absoluteFill, styles.dangerSolidFill, { borderRadius: radius }]} />;
-  }
-
-  return null;
-}
-
-function labelColor(variant: ButtonVariant, solid: boolean) {
-  if (variant === "gold") {
-    return tokens.colors.goldInk;
-  }
-
   if (variant === "danger") {
-    return solid ? tokens.colors.dangerInk : tokens.colors.over;
+    return theme.color.textOnBrand;
   }
-
   if (variant === "text") {
-    return tokens.colors.accent;
+    return theme.color.actionText;
   }
-
-  return tokens.colors.ink;
+  return theme.color.textPrimary; // ghost / secondary
 }
 
-function spinnerColor(variant: ButtonVariant, solid: boolean) {
-  return variant === "gold" || (variant === "danger" && solid) ? tokens.colors.goldInk : tokens.colors.ink;
-}
-
-const styles = StyleSheet.create({
-  block: {
-    width: "100%",
-  },
-  base: {
-    position: "relative",
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 0,
-  },
-  content: {
-    position: "relative",
-    zIndex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: tokens.control.button.gap,
-  },
-  label: {
-    fontFamily: tokens.font.bodySemi,
-  },
-  gold: {
-    shadowColor: tokens.colors.accent,
-    shadowOpacity: 0.22,
-    shadowRadius: 26,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 10,
-  },
-  ghost: {
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    backgroundColor: tokens.colors.panel,
-  },
-  text: {
-    backgroundColor: "transparent",
-  },
-  danger: {
-    borderWidth: 1,
-    borderColor: tokens.colors.dangerBorder,
-    backgroundColor: tokens.colors.dangerTint,
-  },
-  dangerSolid: {
-    borderWidth: 0,
-  },
-  dangerSolidFill: {
-    backgroundColor: tokens.colors.over,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    block: {
+      width: "100%",
+    },
+    base: {
+      position: "relative",
+      overflow: "hidden",
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 0,
+    },
+    content: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+    },
+    label: {
+      fontFamily: t.typography.family.uiSemi,
+      letterSpacing: -0.15,
+    },
+    gold: {
+      backgroundColor: t.color.action,
+      ...t.elevation.sm,
+    },
+    ghost: {
+      backgroundColor: t.color.surfaceCard,
+      borderWidth: 1,
+      borderColor: t.color.borderStrong,
+      ...t.elevation.xs,
+    },
+    text: {
+      backgroundColor: "transparent",
+    },
+    danger: {
+      backgroundColor: t.status.overdue.solid,
+      ...t.elevation.sm,
+    },
+    disabled: {
+      opacity: 0.55,
+    },
+  });

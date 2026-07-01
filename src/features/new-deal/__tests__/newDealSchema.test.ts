@@ -1,4 +1,9 @@
-import { newDealFormSchema, toCreateDealInput, type NewDealFormValues } from "@/features/new-deal/newDealSchema";
+import { t } from "i18next";
+
+import { buildNewDealFormSchema, toCreateDealInput, type NewDealFormValues } from "@/features/new-deal/newDealSchema";
+
+// i18next is initialized in jest.setup.ts, so messages resolve to English here.
+const newDealFormSchema = buildNewDealFormSchema(t);
 
 function values(overrides: Partial<NewDealFormValues> = {}): NewDealFormValues {
   return {

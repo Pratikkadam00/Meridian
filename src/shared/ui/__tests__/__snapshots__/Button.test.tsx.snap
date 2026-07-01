@@ -61,27 +61,28 @@ exports[`Button renders and fires the gold button action 1`] = `
         {
           "alignItems": "center",
           "borderWidth": 0,
+          "flexDirection": "row",
           "justifyContent": "center",
           "overflow": "hidden",
           "position": "relative",
         },
         {
-          "elevation": 10,
-          "shadowColor": "#c8a96a",
+          "backgroundColor": "#0E6E5C",
+          "elevation": 3,
+          "shadowColor": "#0A1F1B",
           "shadowOffset": {
-            "height": 10,
+            "height": 2,
             "width": 0,
           },
-          "shadowOpacity": 0.22,
-          "shadowRadius": 26,
+          "shadowOpacity": 0.08,
+          "shadowRadius": 6,
         },
-        false,
         {
           "borderRadius": 14,
-          "minHeight": 52,
-          "paddingHorizontal": 24,
-          "paddingVertical": 16,
+          "minHeight": 56,
+          "paddingHorizontal": 22,
         },
+        false,
       ]
     }
   >
@@ -97,44 +98,10 @@ exports[`Button renders and fires the gold button action 1`] = `
             "top": 0,
           },
           {
-            "backgroundColor": "#e3c884",
+            "backgroundColor": "#094B3F",
           },
           {
             "opacity": 0,
-          },
-        ]
-      }
-    />
-    <ViewManagerAdapter_ExpoLinearGradient
-      colors={
-        [
-          4293118084,
-          4289103178,
-        ]
-      }
-      endPoint={
-        [
-          1,
-          1,
-        ]
-      }
-      startPoint={
-        [
-          0,
-          0,
-        ]
-      }
-      style={
-        [
-          {
-            "bottom": 0,
-            "left": 0,
-            "position": "absolute",
-            "right": 0,
-            "top": 0,
-          },
-          {
-            "borderRadius": 14,
           },
         ]
       }
@@ -146,32 +113,32 @@ exports[`Button renders and fires the gold button action 1`] = `
           "flexDirection": "row",
           "gap": 8,
           "justifyContent": "center",
-          "position": "relative",
-          "zIndex": 1,
         }
       }
     >
       <Text
+        maxFontSizeMultiplier={1.3}
         style={
           [
             {
-              "color": "#eceef2",
-              "fontFamily": "Inter_400Regular",
+              "color": "#16201E",
+              "fontFamily": "HankenGrotesk_400Regular",
             },
             {
-              "fontFamily": "Inter_500Medium",
+              "fontFamily": "HankenGrotesk_500Medium",
               "fontSize": 13,
               "lineHeight": 18,
             },
             false,
+            false,
             [
               {
-                "fontFamily": "Inter_600SemiBold",
+                "fontFamily": "HankenGrotesk_600SemiBold",
+                "letterSpacing": -0.15,
               },
               {
-                "color": "#1a1407",
-                "fontSize": 15,
-                "lineHeight": 20,
+                "color": "#F4FBF8",
+                "fontSize": 16,
               },
             ],
           ]
@@ -244,27 +211,28 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
           {
             "alignItems": "center",
             "borderWidth": 0,
+            "flexDirection": "row",
             "justifyContent": "center",
             "overflow": "hidden",
             "position": "relative",
           },
           {
-            "elevation": 10,
-            "shadowColor": "#c8a96a",
+            "backgroundColor": "#0E6E5C",
+            "elevation": 3,
+            "shadowColor": "#0A1F1B",
             "shadowOffset": {
-              "height": 10,
+              "height": 2,
               "width": 0,
             },
-            "shadowOpacity": 0.22,
-            "shadowRadius": 26,
+            "shadowOpacity": 0.08,
+            "shadowRadius": 6,
           },
-          false,
           {
             "borderRadius": 14,
-            "minHeight": 52,
-            "paddingHorizontal": 24,
-            "paddingVertical": 16,
+            "minHeight": 56,
+            "paddingHorizontal": 22,
           },
+          false,
         ]
       }
     >
@@ -280,44 +248,10 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
               "top": 0,
             },
             {
-              "backgroundColor": "#e3c884",
+              "backgroundColor": "#094B3F",
             },
             {
               "opacity": 0,
-            },
-          ]
-        }
-      />
-      <ViewManagerAdapter_ExpoLinearGradient
-        colors={
-          [
-            4293118084,
-            4289103178,
-          ]
-        }
-        endPoint={
-          [
-            1,
-            1,
-          ]
-        }
-        startPoint={
-          [
-            0,
-            0,
-          ]
-        }
-        style={
-          [
-            {
-              "bottom": 0,
-              "left": 0,
-              "position": "absolute",
-              "right": 0,
-              "top": 0,
-            },
-            {
-              "borderRadius": 14,
             },
           ]
         }
@@ -329,32 +263,32 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
             "flexDirection": "row",
             "gap": 8,
             "justifyContent": "center",
-            "position": "relative",
-            "zIndex": 1,
           }
         }
       >
         <Text
+          maxFontSizeMultiplier={1.3}
           style={
             [
               {
-                "color": "#eceef2",
-                "fontFamily": "Inter_400Regular",
+                "color": "#16201E",
+                "fontFamily": "HankenGrotesk_400Regular",
               },
               {
-                "fontFamily": "Inter_500Medium",
+                "fontFamily": "HankenGrotesk_500Medium",
                 "fontSize": 13,
                 "lineHeight": 18,
               },
               false,
+              false,
               [
                 {
-                  "fontFamily": "Inter_600SemiBold",
+                  "fontFamily": "HankenGrotesk_600SemiBold",
+                  "letterSpacing": -0.15,
                 },
                 {
-                  "color": "#1a1407",
-                  "fontSize": 15,
-                  "lineHeight": 20,
+                  "color": "#F4FBF8",
+                  "fontSize": 16,
                 },
               ],
             ]
@@ -423,22 +357,30 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
           {
             "alignItems": "center",
             "borderWidth": 0,
+            "flexDirection": "row",
             "justifyContent": "center",
             "overflow": "hidden",
             "position": "relative",
           },
           {
-            "backgroundColor": "#16181f",
-            "borderColor": "#262a33",
+            "backgroundColor": "#FFFFFF",
+            "borderColor": "#CFCBC1",
             "borderWidth": 1,
+            "elevation": 1,
+            "shadowColor": "#0A1F1B",
+            "shadowOffset": {
+              "height": 1,
+              "width": 0,
+            },
+            "shadowOpacity": 0.06,
+            "shadowRadius": 2,
           },
-          false,
           {
             "borderRadius": 14,
-            "minHeight": 52,
-            "paddingHorizontal": 24,
-            "paddingVertical": 16,
+            "minHeight": 56,
+            "paddingHorizontal": 22,
           },
+          false,
         ]
       }
     >
@@ -449,32 +391,32 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
             "flexDirection": "row",
             "gap": 8,
             "justifyContent": "center",
-            "position": "relative",
-            "zIndex": 1,
           }
         }
       >
         <Text
+          maxFontSizeMultiplier={1.3}
           style={
             [
               {
-                "color": "#eceef2",
-                "fontFamily": "Inter_400Regular",
+                "color": "#16201E",
+                "fontFamily": "HankenGrotesk_400Regular",
               },
               {
-                "fontFamily": "Inter_500Medium",
+                "fontFamily": "HankenGrotesk_500Medium",
                 "fontSize": 13,
                 "lineHeight": 18,
               },
               false,
+              false,
               [
                 {
-                  "fontFamily": "Inter_600SemiBold",
+                  "fontFamily": "HankenGrotesk_600SemiBold",
+                  "letterSpacing": -0.15,
                 },
                 {
-                  "color": "#eceef2",
-                  "fontSize": 15,
-                  "lineHeight": 20,
+                  "color": "#16201E",
+                  "fontSize": 16,
                 },
               ],
             ]
@@ -543,6 +485,7 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
           {
             "alignItems": "center",
             "borderWidth": 0,
+            "flexDirection": "row",
             "justifyContent": "center",
             "overflow": "hidden",
             "position": "relative",
@@ -550,13 +493,12 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
           {
             "backgroundColor": "transparent",
           },
-          false,
           {
             "borderRadius": 14,
-            "minHeight": 52,
-            "paddingHorizontal": 24,
-            "paddingVertical": 16,
+            "minHeight": 56,
+            "paddingHorizontal": 22,
           },
+          false,
         ]
       }
     >
@@ -567,32 +509,32 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
             "flexDirection": "row",
             "gap": 8,
             "justifyContent": "center",
-            "position": "relative",
-            "zIndex": 1,
           }
         }
       >
         <Text
+          maxFontSizeMultiplier={1.3}
           style={
             [
               {
-                "color": "#eceef2",
-                "fontFamily": "Inter_400Regular",
+                "color": "#16201E",
+                "fontFamily": "HankenGrotesk_400Regular",
               },
               {
-                "fontFamily": "Inter_500Medium",
+                "fontFamily": "HankenGrotesk_500Medium",
                 "fontSize": 13,
                 "lineHeight": 18,
               },
               false,
+              false,
               [
                 {
-                  "fontFamily": "Inter_600SemiBold",
+                  "fontFamily": "HankenGrotesk_600SemiBold",
+                  "letterSpacing": -0.15,
                 },
                 {
-                  "color": "#c8a96a",
-                  "fontSize": 15,
-                  "lineHeight": 20,
+                  "color": "#0E6E5C",
+                  "fontSize": 16,
                 },
               ],
             ]
@@ -661,22 +603,28 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
           {
             "alignItems": "center",
             "borderWidth": 0,
+            "flexDirection": "row",
             "justifyContent": "center",
             "overflow": "hidden",
             "position": "relative",
           },
           {
-            "backgroundColor": "rgba(232,124,124,0.12)",
-            "borderColor": "rgba(232,124,124,0.32)",
-            "borderWidth": 1,
+            "backgroundColor": "#C0432B",
+            "elevation": 3,
+            "shadowColor": "#0A1F1B",
+            "shadowOffset": {
+              "height": 2,
+              "width": 0,
+            },
+            "shadowOpacity": 0.08,
+            "shadowRadius": 6,
           },
-          false,
           {
             "borderRadius": 14,
-            "minHeight": 52,
-            "paddingHorizontal": 24,
-            "paddingVertical": 16,
+            "minHeight": 56,
+            "paddingHorizontal": 22,
           },
+          false,
         ]
       }
     >
@@ -687,32 +635,32 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
             "flexDirection": "row",
             "gap": 8,
             "justifyContent": "center",
-            "position": "relative",
-            "zIndex": 1,
           }
         }
       >
         <Text
+          maxFontSizeMultiplier={1.3}
           style={
             [
               {
-                "color": "#eceef2",
-                "fontFamily": "Inter_400Regular",
+                "color": "#16201E",
+                "fontFamily": "HankenGrotesk_400Regular",
               },
               {
-                "fontFamily": "Inter_500Medium",
+                "fontFamily": "HankenGrotesk_500Medium",
                 "fontSize": 13,
                 "lineHeight": 18,
               },
               false,
+              false,
               [
                 {
-                  "fontFamily": "Inter_600SemiBold",
+                  "fontFamily": "HankenGrotesk_600SemiBold",
+                  "letterSpacing": -0.15,
                 },
                 {
-                  "color": "#e87c7c",
-                  "fontSize": 15,
-                  "lineHeight": 20,
+                  "color": "#F4FBF8",
+                  "fontSize": 16,
                 },
               ],
             ]
@@ -730,7 +678,7 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
           "position": "relative",
         },
         {
-          "opacity": 0.4,
+          "opacity": 0.45,
         },
         {
           "transform": [
@@ -783,26 +731,29 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
           {
             "alignItems": "center",
             "borderWidth": 0,
+            "flexDirection": "row",
             "justifyContent": "center",
             "overflow": "hidden",
             "position": "relative",
           },
           {
-            "elevation": 10,
-            "shadowColor": "#c8a96a",
+            "backgroundColor": "#0E6E5C",
+            "elevation": 3,
+            "shadowColor": "#0A1F1B",
             "shadowOffset": {
-              "height": 10,
+              "height": 2,
               "width": 0,
             },
-            "shadowOpacity": 0.22,
-            "shadowRadius": 26,
+            "shadowOpacity": 0.08,
+            "shadowRadius": 6,
           },
-          false,
           {
             "borderRadius": 14,
-            "minHeight": 52,
-            "paddingHorizontal": 24,
-            "paddingVertical": 16,
+            "minHeight": 56,
+            "paddingHorizontal": 22,
+          },
+          {
+            "opacity": 0.55,
           },
         ]
       }
@@ -819,44 +770,10 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
               "top": 0,
             },
             {
-              "backgroundColor": "#e3c884",
+              "backgroundColor": "#094B3F",
             },
             {
               "opacity": 0,
-            },
-          ]
-        }
-      />
-      <ViewManagerAdapter_ExpoLinearGradient
-        colors={
-          [
-            4293118084,
-            4289103178,
-          ]
-        }
-        endPoint={
-          [
-            1,
-            1,
-          ]
-        }
-        startPoint={
-          [
-            0,
-            0,
-          ]
-        }
-        style={
-          [
-            {
-              "bottom": 0,
-              "left": 0,
-              "position": "absolute",
-              "right": 0,
-              "top": 0,
-            },
-            {
-              "borderRadius": 14,
             },
           ]
         }
@@ -868,36 +785,36 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
             "flexDirection": "row",
             "gap": 8,
             "justifyContent": "center",
-            "position": "relative",
-            "zIndex": 1,
           }
         }
       >
         <ActivityIndicator
-          color="#1a1407"
+          color="#F4FBF8"
           size="small"
         />
         <Text
+          maxFontSizeMultiplier={1.3}
           style={
             [
               {
-                "color": "#eceef2",
-                "fontFamily": "Inter_400Regular",
+                "color": "#16201E",
+                "fontFamily": "HankenGrotesk_400Regular",
               },
               {
-                "fontFamily": "Inter_500Medium",
+                "fontFamily": "HankenGrotesk_500Medium",
                 "fontSize": 13,
                 "lineHeight": 18,
               },
               false,
+              false,
               [
                 {
-                  "fontFamily": "Inter_600SemiBold",
+                  "fontFamily": "HankenGrotesk_600SemiBold",
+                  "letterSpacing": -0.15,
                 },
                 {
-                  "color": "#1a1407",
-                  "fontSize": 15,
-                  "lineHeight": 20,
+                  "color": "#F4FBF8",
+                  "fontSize": 16,
                 },
               ],
             ]
@@ -915,7 +832,7 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
           "position": "relative",
         },
         {
-          "opacity": 0.4,
+          "opacity": 0.45,
         },
         {
           "transform": [
@@ -968,26 +885,29 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
           {
             "alignItems": "center",
             "borderWidth": 0,
+            "flexDirection": "row",
             "justifyContent": "center",
             "overflow": "hidden",
             "position": "relative",
           },
           {
-            "elevation": 10,
-            "shadowColor": "#c8a96a",
+            "backgroundColor": "#0E6E5C",
+            "elevation": 3,
+            "shadowColor": "#0A1F1B",
             "shadowOffset": {
-              "height": 10,
+              "height": 2,
               "width": 0,
             },
-            "shadowOpacity": 0.22,
-            "shadowRadius": 26,
+            "shadowOpacity": 0.08,
+            "shadowRadius": 6,
           },
-          false,
           {
             "borderRadius": 14,
-            "minHeight": 52,
-            "paddingHorizontal": 24,
-            "paddingVertical": 16,
+            "minHeight": 56,
+            "paddingHorizontal": 22,
+          },
+          {
+            "opacity": 0.55,
           },
         ]
       }
@@ -1004,44 +924,10 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
               "top": 0,
             },
             {
-              "backgroundColor": "#e3c884",
+              "backgroundColor": "#094B3F",
             },
             {
               "opacity": 0,
-            },
-          ]
-        }
-      />
-      <ViewManagerAdapter_ExpoLinearGradient
-        colors={
-          [
-            4293118084,
-            4289103178,
-          ]
-        }
-        endPoint={
-          [
-            1,
-            1,
-          ]
-        }
-        startPoint={
-          [
-            0,
-            0,
-          ]
-        }
-        style={
-          [
-            {
-              "bottom": 0,
-              "left": 0,
-              "position": "absolute",
-              "right": 0,
-              "top": 0,
-            },
-            {
-              "borderRadius": 14,
             },
           ]
         }
@@ -1053,32 +939,32 @@ exports[`Button snapshots every variant so an unintended restyle is caught 1`] =
             "flexDirection": "row",
             "gap": 8,
             "justifyContent": "center",
-            "position": "relative",
-            "zIndex": 1,
           }
         }
       >
         <Text
+          maxFontSizeMultiplier={1.3}
           style={
             [
               {
-                "color": "#eceef2",
-                "fontFamily": "Inter_400Regular",
+                "color": "#16201E",
+                "fontFamily": "HankenGrotesk_400Regular",
               },
               {
-                "fontFamily": "Inter_500Medium",
+                "fontFamily": "HankenGrotesk_500Medium",
                 "fontSize": 13,
                 "lineHeight": 18,
               },
               false,
+              false,
               [
                 {
-                  "fontFamily": "Inter_600SemiBold",
+                  "fontFamily": "HankenGrotesk_600SemiBold",
+                  "letterSpacing": -0.15,
                 },
                 {
-                  "color": "#1a1407",
-                  "fontSize": 15,
-                  "lineHeight": 20,
+                  "color": "#F4FBF8",
+                  "fontSize": 16,
                 },
               ],
             ]

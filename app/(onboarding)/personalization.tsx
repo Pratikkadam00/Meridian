@@ -9,7 +9,8 @@ import { OnboardingStepView, OptionCard, OptionChip, SegmentControl, persistOnbo
 import { useRepositories } from "@/shared/data/RepositoryProvider";
 import type { BrokerRole, DealVolume } from "@/shared/data/repositories/onboardingRepository";
 import { trackAnalyticsEvent } from "@/shared/observability/analytics";
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useThemedStyles } from "@/shared/theme/ThemeProvider";
 import { GoldButton, GhostButton } from "@/shared/ui/Button";
 import { ProgressDots } from "@/shared/ui/ProgressDots";
 import { Screen } from "@/shared/ui/Screen";
@@ -22,6 +23,7 @@ export default function PersonalizationScreen() {
   const { t } = useTranslation();
   const { onboarding } = useRepositories();
   const { refreshProfile } = useAuth();
+  const styles = useThemedStyles(makeStyles);
   const [role, setRole] = useState<BrokerRole>("solo_broker");
   const [volume, setVolume] = useState<DealVolume>("1-5");
   const [selectedDevelopers, setSelectedDevelopers] = useState(() => new Set(["Emaar", "Damac"]));
@@ -123,36 +125,37 @@ export default function PersonalizationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    paddingBottom: tokens.spacing[32],
-  },
-  scrollContent: {
-    paddingBottom: tokens.spacing[32],
-  },
-  title: {
-    marginTop: tokens.spacing[8],
-    marginBottom: 20,
-  },
-  sectionLabel: {
-    marginTop: tokens.spacing[8],
-    marginBottom: 10,
-  },
-  chips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 9,
-    marginBottom: tokens.spacing[8],
-  },
-  message: {
-    color: tokens.colors.due,
-    marginTop: tokens.spacing[12],
-  },
-  actions: {
-    gap: tokens.spacing[12],
-    marginTop: tokens.spacing[22],
-  },
-  disabled: {
-    opacity: 0.52,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    screen: {
+      paddingBottom: t.space[8],
+    },
+    scrollContent: {
+      paddingBottom: t.space[8],
+    },
+    title: {
+      marginTop: t.space[2],
+      marginBottom: 20,
+    },
+    sectionLabel: {
+      marginTop: t.space[2],
+      marginBottom: 10,
+    },
+    chips: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 9,
+      marginBottom: t.space[2],
+    },
+    message: {
+      color: t.color.accentText,
+      marginTop: t.space[3],
+    },
+    actions: {
+      gap: t.space[3],
+      marginTop: t.space[5],
+    },
+    disabled: {
+      opacity: 0.52,
+    },
+  });

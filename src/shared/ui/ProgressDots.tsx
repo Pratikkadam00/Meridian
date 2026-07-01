@@ -1,6 +1,7 @@
 import { StyleSheet, View } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useThemedStyles } from "@/shared/theme/ThemeProvider";
 
 type ProgressDotsProps = {
   count: number;
@@ -9,6 +10,7 @@ type ProgressDotsProps = {
 };
 
 export function ProgressDots({ count, activeIndex, compact = false }: ProgressDotsProps) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={compact ? styles.compact : styles.full}>
       {Array.from({ length: count }, (_, index) => (
@@ -24,34 +26,24 @@ export function ProgressDots({ count, activeIndex, compact = false }: ProgressDo
   );
 }
 
-const styles = StyleSheet.create({
-  full: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  compact: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  fullDot: {
-    height: 4,
-    flex: 1,
-    borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.line,
-  },
-  compactDot: {
-    width: 10,
-    height: 4,
-    borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.line,
-  },
-  // onboarding bars stay equal-width and just turn gold (§6.2–6.5 .prog-dots i.on)
-  fullActive: {
-    backgroundColor: tokens.colors.accent,
-  },
-  // welcome/deck dots grow to a gold pill (§6.1 active 24px)
-  compactActive: {
-    width: 24,
-    backgroundColor: tokens.colors.accent,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    full: { flexDirection: "row", gap: 6 },
+    compact: { flexDirection: "row", gap: 6 },
+    fullDot: {
+      height: 4,
+      flex: 1,
+      borderRadius: t.radius.pill,
+      backgroundColor: t.color.borderStrong,
+    },
+    compactDot: {
+      width: 10,
+      height: 4,
+      borderRadius: t.radius.pill,
+      backgroundColor: t.color.borderStrong,
+    },
+    // onboarding bars stay equal-width, just turn jade
+    fullActive: { backgroundColor: t.color.action },
+    // welcome/deck dots grow to a jade pill
+    compactActive: { width: 24, backgroundColor: t.color.action },
+  });

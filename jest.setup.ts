@@ -1,4 +1,20 @@
+import i18next from "i18next";
 import type { ReactNode } from "react";
+
+import { resources } from "./src/shared/lib/i18n/translations";
+
+// The data layer localizes deal display strings via the i18next singleton.
+// Tests don't mount I18nProvider (which normally initializes it), so init the
+// English bundle here — t() then returns real strings instead of raw keys.
+if (!i18next.isInitialized) {
+  void i18next.init({
+    compatibilityJSON: "v4",
+    fallbackLng: "en",
+    lng: "en",
+    interpolation: { escapeValue: false },
+    resources,
+  });
+}
 
 jest.mock("react-native-reanimated", () => {
   const { View } = require("react-native");

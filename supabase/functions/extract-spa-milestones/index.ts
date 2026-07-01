@@ -23,6 +23,10 @@ const milestoneSchema = z.object({
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   status: z.enum(["due", "upcoming", "overdue", "paid"]),
   source: z.literal("spa_extracted"),
+  // The model's own confidence that this row's figures were clearly stated in
+  // the document (vs inferred/uncertain). Trust-but-verify: the review screen
+  // requires an explicit confirm on money fields, and low-confidence rows too.
+  confidence: z.enum(["high", "medium", "low"]),
 });
 
 const requestSchema = z.object({
@@ -44,9 +48,10 @@ const SYSTEM_PROMPT =
   '3. You only handle Dubai off-plan real-estate payment plans. If the text is not an SPA or contains no payment plan, return {"milestones":[]}.\n' +
   "4. Extract only figures actually present in the document. Never invent, guess, or alter amounts, percentages, or dates.\n\n" +
   "OUTPUT SHAPE (the only thing you may return): " +
-  '{"milestones":[{"label":"Down payment","triggerType":"booking|registration|construction|handover","triggerValue":"Booking or 40% built","percent":"20","amountAed":"640000","dueDate":"YYYY-MM-DD or null"}]}. ' +
+  '{"milestones":[{"label":"Down payment","triggerType":"booking|registration|construction|handover","triggerValue":"Booking or 40% built","percent":"20","amountAed":"640000","dueDate":"YYYY-MM-DD or null","confidence":"high|medium|low"}]}. ' +
   "percent and amountAed are plain numeric strings (no commas, %, or currency). Use null for an unknown dueDate. " +
-  "triggerType: booking for the down/booking payment, registration for DLD/Oqood, construction for build milestones, handover for the final/handover payment.";
+  "triggerType: booking for the down/booking payment, registration for DLD/Oqood, construction for build milestones, handover for the final/handover payment. " +
+  'confidence is YOUR honest self-assessment of this row, not a fixed value: "high" only when the label, percent, amount AND date are all explicitly and unambiguously stated in the document text; "medium" when the amount/percent is stated but a detail (e.g. the exact date) had to be inferred from context; "low" when you had to guess, extrapolate, or the source text for this row was unclear, partial, or contradictory. Never mark a row "high" just because you produced a number for it.';
 
 serve(async (request) => {
   try {
@@ -101,7 +106,13 @@ serve(async (request) => {
       p_max: 30,
       p_window: "1 hour",
     });
-    if (!rlError && allowed === false) {
+    // Fail CLOSED: never reach the paid Groq path if the limiter could not be
+    // evaluated (DB error / contention) — a limiter outage must not become a
+    // free pass on cost.
+    if (rlError) {
+      return json({ error: "Extraction is temporarily unavailable. Try again shortly, or enter the plan manually." }, 503);
+    }
+    if (allowed !== true) {
       return json({ error: "Too many SPA extractions right now. Try again later, or enter the plan manually." }, 429);
     }
 
@@ -109,6 +120,13 @@ serve(async (request) => {
 
     if (downloadError || !spaFile) {
       return json({ error: downloadError?.message ?? "Could not read SPA file." }, 404);
+    }
+
+    // Bound parse cost: reject oversized PDFs before unpdf runs over them. The
+    // bucket also enforces a 10 MiB ceiling, but check here too (defense in depth).
+    const MAX_SPA_BYTES = 10 * 1024 * 1024;
+    if (spaFile.size > MAX_SPA_BYTES) {
+      return json({ error: "This SPA file is too large (max 10 MB). Continue with manual entry." }, 413);
     }
 
     // Groq is text-only, so extract the PDF text first. A scanned/image-only PDF
@@ -170,6 +188,10 @@ serve(async (request) => {
         dueDate: typeof m.dueDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(m.dueDate) ? m.dueDate : null,
         status: "upcoming",
         source: "spa_extracted",
+        // Fail safe toward MORE scrutiny, never less: if the model omitted or
+        // mis-typed confidence, treat the row as "low" so review requires an
+        // explicit confirm rather than silently trusting an unrated figure.
+        confidence: m.confidence === "high" || m.confidence === "medium" || m.confidence === "low" ? m.confidence : "low",
       }));
       normalized = { milestones };
     } catch (_error) {

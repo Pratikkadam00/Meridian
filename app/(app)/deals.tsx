@@ -7,7 +7,9 @@ import { StyleSheet, View } from "react-native";
 
 import type { DashboardDeal } from "@/shared/data/repositories/dealsRepository";
 import { useRepositories } from "@/shared/data/RepositoryProvider";
-import { tokens } from "@/shared/theme/tokens";
+import { useI18nControls } from "@/shared/lib/i18n/I18nProvider";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useThemedStyles } from "@/shared/theme/ThemeProvider";
 import { GoldButton } from "@/shared/ui/Button";
 import { PressableScale } from "@/shared/ui/PressableScale";
 import { Screen } from "@/shared/ui/Screen";
@@ -17,6 +19,8 @@ export default function DealsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { deals: dealsRepository } = useRepositories();
+  const { isRTL } = useI18nControls();
+  const styles = useThemedStyles(makeStyles);
   const dealsQuery = useQuery({
     queryKey: ["dashboard-deals"],
     queryFn: () => dealsRepository.listDashboardDeals(),
@@ -32,7 +36,7 @@ export default function DealsScreen() {
   const renderDeal = useCallback(({ item }: ListRenderItemInfo<DashboardDeal>) => <DealListRow deal={item} onPress={handleDealPress} />, [handleDealPress]);
 
   return (
-    <Screen contentStyle={styles.screen}>
+    <Screen contentStyle={[styles.screen, isRTL && styles.rtl]}>
       <FlashList
         data={dealsQuery.data ?? []}
         renderItem={renderDeal}
@@ -54,6 +58,7 @@ export default function DealsScreen() {
 
 function DealListHeader({ error }: { error: Error | null }) {
   const { t } = useTranslation();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View>
       <Text variant="eyebrow">{t("deals.eyebrow")}</Text>
@@ -71,10 +76,11 @@ function DealListHeader({ error }: { error: Error | null }) {
 
 function DealListRow({ deal, onPress }: { deal: DashboardDeal; onPress: (dealId: string) => void }) {
   const { t } = useTranslation();
+  const styles = useThemedStyles(makeStyles);
   return (
     <PressableScale
       accessibilityLabel={t("deals.openDeal", { projectName: deal.projectName })}
-      focusRadius={tokens.radius.panel + tokens.control.focusRingOffset}
+      focusRadius={18 + 3}
       pressScale={0.985}
       haptic
       onPress={() => onPress(deal.id)}
@@ -97,6 +103,7 @@ function DealListRow({ deal, onPress }: { deal: DashboardDeal; onPress: (dealId:
 }
 
 function ListState({ label }: { label: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.listState}>
       <Text variant="mono" muted>
@@ -106,58 +113,63 @@ function ListState({ label }: { label: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    paddingBottom: 0,
-  },
-  title: {
-    marginTop: tokens.spacing[8],
-    marginBottom: tokens.spacing[22],
-  },
-  listContent: {
-    paddingBottom: tokens.layout.appScreenBottomPadding,
-  },
-  error: {
-    color: tokens.colors.over,
-    marginBottom: tokens.spacing[12],
-  },
-  listState: {
-    minHeight: 124,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.panel,
-    backgroundColor: tokens.colors.panel,
-    marginBottom: tokens.spacing[12],
-  },
-  rowWrap: {
-    marginBottom: tokens.spacing[12],
-  },
-  row: {
-    minHeight: 82,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: tokens.spacing[12],
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.panel,
-    backgroundColor: tokens.colors.panel,
-    padding: tokens.spacing[16],
-  },
-  rowCopy: {
-    flex: 1,
-  },
-  rowTitle: {
-    fontSize: 17,
-    lineHeight: 21,
-    marginBottom: tokens.spacing[4],
-  },
-  status: {
-    color: tokens.colors.muted,
-  },
-  due: {
-    color: tokens.colors.due,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    rtl: {
+      direction: "rtl",
+    },
+    screen: {
+      paddingBottom: 0,
+    },
+    title: {
+      marginTop: t.space[2],
+      marginBottom: t.space[5],
+    },
+    listContent: {
+      paddingBottom: t.sizing.tabBarClearance,
+    },
+    error: {
+      color: t.status.overdue.text,
+      marginBottom: t.space[3],
+    },
+    listState: {
+      minHeight: 124,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.lg,
+      backgroundColor: t.color.surfaceCard,
+      marginBottom: t.space[3],
+    },
+    rowWrap: {
+      marginBottom: t.space[3],
+    },
+    row: {
+      minHeight: 82,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: t.space[3],
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.lg,
+      backgroundColor: t.color.surfaceCard,
+      padding: t.space[4],
+      ...t.elevation.sm,
+    },
+    rowCopy: {
+      flex: 1,
+    },
+    rowTitle: {
+      fontSize: 17,
+      lineHeight: 21,
+      marginBottom: t.space[1],
+    },
+    status: {
+      color: t.color.textSecondary,
+    },
+    due: {
+      color: t.color.accentText,
+    },
+  });

@@ -4,7 +4,9 @@ import { useTranslation } from "react-i18next";
 
 import { Sentry } from "@/shared/observability/sentry";
 import { redactUnknown } from "@/shared/security/redaction";
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useThemedStyles } from "@/shared/theme/ThemeProvider";
+
 import { GoldButton } from "./Button";
 import { Screen } from "./Screen";
 import { Text } from "./Text";
@@ -16,6 +18,7 @@ type AppErrorFallbackProps = {
 
 export function AppErrorFallback({ error, onRetry }: AppErrorFallbackProps) {
   const { t } = useTranslation();
+  const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
     Sentry.captureException(redactUnknown(error));
@@ -37,22 +40,23 @@ export function AppErrorFallback({ error, onRetry }: AppErrorFallbackProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    justifyContent: "center",
-  },
-  panel: {
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.panel,
-    backgroundColor: tokens.colors.panel,
-    padding: tokens.spacing[22],
-  },
-  title: {
-    marginTop: tokens.spacing[8],
-  },
-  body: {
-    marginTop: tokens.spacing[12],
-    marginBottom: tokens.spacing[22],
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    screen: {
+      justifyContent: "center",
+    },
+    panel: {
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.lg,
+      backgroundColor: t.color.surfaceCard,
+      padding: t.space[5],
+    },
+    title: {
+      marginTop: t.space[2],
+    },
+    body: {
+      marginTop: t.space[3],
+      marginBottom: t.space[5],
+    },
+  });

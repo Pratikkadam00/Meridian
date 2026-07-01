@@ -1,71 +1,85 @@
 import { Text as NativeText, StyleSheet, type TextProps as NativeTextProps } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 
+// Variant names are kept stable across the gold→jade migration so every call
+// site keeps compiling; values now follow the jade/amber type system
+// (Bricolage display, Hanken UI, JetBrains mono).
 type TextVariant = "display" | "h1" | "amount" | "cardTitle" | "body" | "caption" | "eyebrow" | "mono";
 
 type TextProps = NativeTextProps & {
   variant?: TextVariant;
   muted?: boolean;
+  tertiary?: boolean;
 };
 
-export function Text({ variant = "body", muted = false, style, ...props }: TextProps) {
-  return <NativeText {...props} style={[styles.base, styles[variant], muted && styles.muted, style]} />;
+export function Text({ variant = "body", muted = false, tertiary = false, style, ...props }: TextProps) {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  // Cap Dynamic Type so a large OS font setting can't overflow controls; callers
+  // can still override per-instance via props.
+  return <NativeText maxFontSizeMultiplier={theme.typography.maxFontScale} {...props} style={[styles.base, styles[variant], muted && styles.muted, tertiary && styles.tertiary, style]} />;
 }
 
-const styles = StyleSheet.create({
-  base: {
-    color: tokens.colors.ink,
-    fontFamily: tokens.font.bodyRegular,
-  },
-  muted: {
-    color: tokens.colors.muted,
-  },
-  display: {
-    fontFamily: tokens.font.displayBold,
-    fontSize: 38,
-    letterSpacing: -1.14, // -0.03em per §2
-    lineHeight: 40,
-  },
-  h1: {
-    fontFamily: tokens.font.displayBold,
-    fontSize: 28,
-    letterSpacing: -0.56, // -0.02em per §2
-    lineHeight: 32,
-  },
-  amount: {
-    fontFamily: tokens.font.displayBold,
-    fontSize: 42,
-    letterSpacing: -1.26, // -0.03em per §2
-    lineHeight: 48,
-  },
-  cardTitle: {
-    fontFamily: tokens.font.displayBold,
-    fontSize: 27,
-    letterSpacing: -0.54, // -0.02em per §6 .dcard .proj
-    lineHeight: 31,
-  },
-  body: {
-    fontFamily: tokens.font.bodyRegular,
-    fontSize: 15,
-    lineHeight: 23,
-  },
-  caption: {
-    fontFamily: tokens.font.bodyMedium,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  eyebrow: {
-    color: tokens.colors.accent,
-    fontFamily: tokens.font.monoRegular,
-    fontSize: 11,
-    letterSpacing: 1.76,
-    lineHeight: 16,
-    textTransform: "uppercase",
-  },
-  mono: {
-    fontFamily: tokens.font.monoRegular,
-    fontSize: 12,
-    lineHeight: 18,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    base: {
+      color: t.color.textPrimary,
+      fontFamily: t.typography.family.ui,
+    },
+    muted: {
+      color: t.color.textSecondary,
+    },
+    tertiary: {
+      color: t.color.textTertiary,
+    },
+    display: {
+      fontFamily: t.typography.family.display,
+      fontSize: 34,
+      letterSpacing: -0.68, // -0.02em
+      lineHeight: 38,
+    },
+    h1: {
+      // screen titles → the new "title" role (Bricolage 24)
+      fontFamily: t.typography.family.display,
+      fontSize: 24,
+      letterSpacing: -0.24, // -0.01em
+      lineHeight: 29,
+    },
+    amount: {
+      fontFamily: t.typography.family.display,
+      fontSize: 34,
+      letterSpacing: -0.68,
+      lineHeight: 38,
+    },
+    cardTitle: {
+      fontFamily: t.typography.family.display,
+      fontSize: 20,
+      letterSpacing: -0.4,
+      lineHeight: 25,
+    },
+    body: {
+      fontFamily: t.typography.family.ui,
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    caption: {
+      fontFamily: t.typography.family.uiMedium,
+      fontSize: 13,
+      lineHeight: 18,
+    },
+    eyebrow: {
+      color: t.color.actionText,
+      fontFamily: t.typography.family.uiSemi,
+      fontSize: 12,
+      letterSpacing: 0.72, // 0.06em caps tracking
+      lineHeight: 14,
+      textTransform: "uppercase",
+    },
+    mono: {
+      fontFamily: t.typography.family.mono,
+      fontSize: 13,
+      lineHeight: 18,
+    },
+  });

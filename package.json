@@ -4,6 +4,8 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/bricolage-grotesque": "^0.4.1",
+    "@expo-google-fonts/hanken-grotesk": "^0.4.3",
+    "@expo-google-fonts/ibm-plex-sans-arabic": "^0.4.2",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@hookform/resolvers": "^5.4.0",

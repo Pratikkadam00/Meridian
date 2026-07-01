@@ -30,7 +30,8 @@ serve(async (request) => {
     return json({ error: "Reminder dispatch secret is not configured." }, 500);
   }
 
-  if (request.headers.get("x-reminder-secret") !== reminderSecret) {
+  const providedSecret = request.headers.get("x-reminder-secret") ?? "";
+  if (!(await secretsMatch(providedSecret, reminderSecret))) {
     return json({ error: "Unauthorized." }, 401);
   }
 
@@ -47,76 +48,117 @@ serve(async (request) => {
   });
   const limit = body.data?.limit ?? 50;
 
-  // Atomically claim due rows (pending -> sending, FOR UPDATE SKIP LOCKED) so two
-  // overlapping runs never deliver the same reminder twice.
-  const { data: claimed, error: claimError } = await supabase.rpc("claim_due_reminders", { p_limit: limit });
+  // From here on this is a real, authorized dispatch attempt — log it (success
+  // or failure) so "reminders are firing" is a verifiable fact, not a hope.
+  // See phase_17_dispatch_observability.sql / reminder_dispatch_health().
+  const startedAt = new Date();
+  const results = { inspected: 0, sent: 0, failed: 0, cancelled: 0 };
+  let topLevelError: string | null = null;
 
-  if (claimError) {
-    return json({ error: claimError.message }, 500);
-  }
+  try {
+    // Atomically claim due rows (pending -> sending, FOR UPDATE SKIP LOCKED) so
+    // two overlapping runs never deliver the same reminder twice.
+    const { data: claimed, error: claimError } = await supabase.rpc("claim_due_reminders", { p_limit: limit });
 
-  const claimedIds = (claimed ?? []).map((row) => row.id);
-
-  if (!claimedIds.length) {
-    return json({ inspected: 0, sent: 0, failed: 0, cancelled: 0 }, 200);
-  }
-
-  const { data: reminders, error } = await supabase
-    .from("reminders")
-    .select(
-      "id, org_id, channel, send_at, status, milestones(id, label, amount_aed, due_date, status, deals(id, project_name, unit, created_by))",
-    )
-    .in("id", claimedIds);
-
-  if (error) {
-    return json({ error: error.message }, 500);
-  }
-
-  const results = {
-    inspected: reminders?.length ?? 0,
-    sent: 0,
-    failed: 0,
-    cancelled: 0,
-  };
-
-  for (const reminder of reminders ?? []) {
-    const milestone = relationOne(reminder.milestones);
-
-    if (!milestone || milestone.status === "paid") {
-      await markReminder(supabase, reminder.id, "cancelled");
-      results.cancelled += 1;
-      continue;
+    if (claimError) {
+      topLevelError = claimError.message;
+      return json({ error: claimError.message }, 500);
     }
 
-    try {
-      const message = buildReminderMessage(milestone);
+    const claimedIds = (claimed ?? []).map((row) => row.id);
 
-      if (reminder.channel === "push") {
-        await sendPushReminder(supabase, reminder.org_id, message);
-      } else if (reminder.channel === "email") {
-        await sendEmailReminder(supabase, reminder.org_id, message);
-      } else {
-        throw new Error(`Unsupported reminder channel: ${reminder.channel}`);
+    if (!claimedIds.length) {
+      return json(results, 200);
+    }
+
+    const { data: reminders, error } = await supabase
+      .from("reminders")
+      .select(
+        "id, org_id, channel, send_at, status, milestones(id, label, amount_aed, due_date, status, deals(id, project_name, unit, created_by))",
+      )
+      .in("id", claimedIds);
+
+    if (error) {
+      topLevelError = error.message;
+      return json({ error: error.message }, 500);
+    }
+
+    results.inspected = reminders?.length ?? 0;
+
+    for (const reminder of reminders ?? []) {
+      const milestone = relationOne(reminder.milestones);
+
+      if (!milestone || milestone.status === "paid") {
+        await markReminder(supabase, reminder.id, "cancelled");
+        results.cancelled += 1;
+        continue;
       }
 
-      await markReminder(supabase, reminder.id, "sent");
-      results.sent += 1;
-    } catch (sendError) {
-      console.error("Reminder delivery failed", {
-        reminderId: reminder.id,
-        channel: reminder.channel,
-        error: sendError instanceof Error ? sendError.message : String(sendError),
+      try {
+        const message = buildReminderMessage(milestone);
+
+        if (reminder.channel === "push") {
+          await sendPushReminder(supabase, reminder.org_id, message);
+        } else if (reminder.channel === "email") {
+          await sendEmailReminder(supabase, reminder.org_id, message);
+        } else {
+          throw new Error(`Unsupported reminder channel: ${reminder.channel}`);
+        }
+
+        await markReminder(supabase, reminder.id, "sent");
+        results.sent += 1;
+      } catch (sendError) {
+        console.error("Reminder delivery failed", {
+          reminderId: reminder.id,
+          channel: reminder.channel,
+          error: sendError instanceof Error ? sendError.message : String(sendError),
+        });
+        await markReminder(supabase, reminder.id, "failed");
+        results.failed += 1;
+      }
+    }
+
+    return json(results, 200);
+  } catch (unexpectedError) {
+    topLevelError = unexpectedError instanceof Error ? unexpectedError.message : String(unexpectedError);
+    return json({ error: "Reminder dispatch failed." }, 500);
+  } finally {
+    // A rejected promise here (not just a resolved {error}) would otherwise
+    // throw inside `finally` and override the Response the try/catch already
+    // prepared above. Logging failure must never mask the real dispatch
+    // outcome already returned, so this can never escape as a throw.
+    try {
+      const { error: logError } = await supabase.rpc("log_dispatch_run", {
+        p_function_name: "send-due-reminders",
+        p_started_at: startedAt.toISOString(),
+        p_finished_at: new Date().toISOString(),
+        p_inspected: results.inspected,
+        p_sent: results.sent,
+        p_failed: results.failed,
+        p_cancelled: results.cancelled,
+        p_error: topLevelError,
       });
-      await markReminder(supabase, reminder.id, "failed");
-      results.failed += 1;
+
+      if (logError) {
+        console.error("Failed to record dispatch run", { error: logError.message });
+      }
+    } catch (logException) {
+      console.error("Failed to record dispatch run", {
+        error: logException instanceof Error ? logException.message : String(logException),
+      });
     }
   }
-
-  return json(results, 200);
 });
 
 async function sendPushReminder(supabase, orgId, message) {
-  const { data: tokens, error } = await supabase.from("push_tokens").select("token").eq("org_id", orgId);
+  // Target the broker who owns the deal, not the whole org, so a buyer's
+  // project/unit/amount isn't pushed to teammates who don't manage the deal
+  // (mirrors the email path). Fall back to the org only if the deal has no owner.
+  let query = supabase.from("push_tokens").select("token").eq("org_id", orgId);
+  if (message.createdBy) {
+    query = query.eq("profile_id", message.createdBy);
+  }
+  const { data: tokens, error } = await query;
 
   if (error) {
     throw new Error(error.message);
@@ -125,7 +167,7 @@ async function sendPushReminder(supabase, orgId, message) {
   const expoTokens = [...new Set((tokens ?? []).map((row) => row.token).filter(Boolean))];
 
   if (!expoTokens.length) {
-    throw new Error("No Expo push token registered for this organization.");
+    throw new Error("No Expo push token registered for this deal owner.");
   }
 
   const response = await fetch(EXPO_PUSH_ENDPOINT, {
@@ -296,6 +338,24 @@ function formatDate(value) {
     year: "numeric",
     timeZone: "UTC",
   });
+}
+
+// Constant-time secret comparison: SHA-256 both sides to a fixed 32 bytes, then
+// XOR-compare, so the loop count never depends on secret length/content and a
+// timing side-channel can't recover the dispatch secret byte by byte.
+async function secretsMatch(provided: string, expected: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(provided)),
+    crypto.subtle.digest("SHA-256", encoder.encode(expected)),
+  ]);
+  const av = new Uint8Array(a);
+  const bv = new Uint8Array(b);
+  let diff = 0;
+  for (let i = 0; i < av.length; i++) {
+    diff |= av[i] ^ bv[i];
+  }
+  return diff === 0;
 }
 
 function json(body, status) {

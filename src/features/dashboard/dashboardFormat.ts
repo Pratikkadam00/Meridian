@@ -1,20 +1,26 @@
 import { Decimal } from "decimal.js";
+import { t } from "i18next";
 
 import type { DashboardDeal } from "@/shared/data/repositories/dealsRepository";
 
-export function formatAedCompact(value: string) {
-  const amount = new Decimal(value || "0");
-
+function compactAmount(amount: Decimal) {
   // 999_500 (not 1_000_000) so values that round to 1000K render as "1.00M".
   if (amount.greaterThanOrEqualTo(999_500)) {
-    return `AED ${amount.dividedBy(1_000_000).toDecimalPlaces(2).toFixed(2)}M`;
+    return `${amount.dividedBy(1_000_000).toDecimalPlaces(2).toFixed(2)}M`;
   }
 
   if (amount.greaterThanOrEqualTo(1_000)) {
-    return `AED ${amount.dividedBy(1_000).toDecimalPlaces(0).toFixed(0)}K`;
+    return `${amount.dividedBy(1_000).toDecimalPlaces(0).toFixed(0)}K`;
   }
 
-  return `AED ${amount.toDecimalPlaces(0).toFixed(0)}`;
+  return amount.toDecimalPlaces(0).toFixed(0);
+}
+
+export function formatAedCompact(value: string, options?: { symbol?: boolean }) {
+  const compact = compactAmount(new Decimal(value || "0"));
+
+  // Western digit grouping is kept by design; only the currency word localizes.
+  return options?.symbol === false ? compact : `${t("currency.aed")} ${compact}`;
 }
 
 export function formatAedWhole(value: string) {

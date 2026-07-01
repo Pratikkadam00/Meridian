@@ -1,8 +1,10 @@
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
+import { t } from "i18next";
 import { Platform } from "react-native";
 
 import type { RemindersRepository } from "@/shared/data/repositories/remindersRepository";
+import { amber } from "@/shared/theme/meridian";
 
 export async function registerForReminderPush(remindersRepository: RemindersRepository) {
   if (Platform.OS === "web") {
@@ -11,10 +13,10 @@ export async function registerForReminderPush(remindersRepository: RemindersRepo
 
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("milestone-reminders", {
-      name: "Milestone reminders",
+      name: t("reminders.channelName"),
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 240, 180, 240],
-      lightColor: "#c8a96a",
+      lightColor: amber[500], // Meridian Amber accent (single source of truth)
     });
   }
 

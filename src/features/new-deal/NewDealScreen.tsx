@@ -1,19 +1,23 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Decimal } from "decimal.js";
 import { router } from "expo-router";
-import { FileUp, Plus, Trash2 } from "lucide-react-native";
+import { CircleCheck, FileUp, Plus, Trash2 } from "lucide-react-native";
 import { MotiView } from "moti";
-import { useEffect, useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, View } from "react-native";
 
-import type { DealDetail, NewDealDocumentInput, SpaExtractionInput } from "@/shared/data/repositories/dealsRepository";
+import { formatAedWhole } from "@/features/dashboard";
+import type { DealDetail, MilestoneConfidence, NewDealDocumentInput, SpaExtractionInput } from "@/shared/data/repositories/dealsRepository";
 import { useRepositories } from "@/shared/data/RepositoryProvider";
 import type { MilestoneTrigger } from "@/shared/data/database.types";
 import { useFeatureFlag } from "@/shared/featureFlags/FeatureFlagProvider";
+import { useI18nControls } from "@/shared/lib/i18n/I18nProvider";
 import { captureNonFatalError, finishPerformanceJourney, startPerformanceJourney } from "@/shared/observability/sentry";
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 import { Button, GoldButton } from "@/shared/ui/Button";
 import { IconButton } from "@/shared/ui/IconButton";
 import { Input } from "@/shared/ui/Input";
@@ -22,7 +26,7 @@ import { Screen } from "@/shared/ui/Screen";
 import { OptionChip } from "@/shared/ui/SelectableControls";
 import { Text } from "@/shared/ui/Text";
 
-import { defaultMilestone, milestoneInputToForm, newDealFormSchema, toCreateDealInput, type NewDealFormValues } from "./newDealSchema";
+import { buildNewDealFormSchema, defaultMilestone, milestoneInputToForm, toCreateDealInput, type NewDealFormValues } from "./newDealSchema";
 
 type PendingSpaDocument = NewDealDocumentInput & {
   dealId: string;
@@ -35,13 +39,62 @@ const triggerOptions: { labelKey: string; value: MilestoneTrigger }[] = [
   { labelKey: "newDeal.triggerHandover", value: "handover" },
 ];
 
+function stripNumber(value: string) {
+  return value.replace(/,/g, "").trim();
+}
+
+// Live version of the same reconciliation check the Zod superRefine (and the
+// server RPC) enforce at submit time — surfaced as a positive confirmation
+// while editing, mirroring the design system's SPA-review validation banner.
+function computeReconciliation(totalValueAed: string | undefined, milestones: { amountAed?: string; percent?: string }[] | undefined) {
+  const empty = { reconciles: false, totalLabel: "" };
+
+  if (!totalValueAed || !milestones?.length) {
+    return empty;
+  }
+
+  let total: Decimal;
+  try {
+    total = new Decimal(stripNumber(totalValueAed));
+  } catch {
+    return empty;
+  }
+
+  if (total.lessThanOrEqualTo(0)) {
+    return empty;
+  }
+
+  let amountSum = new Decimal(0);
+  let percentSum = new Decimal(0);
+
+  for (const milestone of milestones) {
+    try {
+      amountSum = amountSum.plus(new Decimal(stripNumber(milestone.amountAed ?? "")));
+      percentSum = percentSum.plus(new Decimal(stripNumber(milestone.percent ?? "")));
+    } catch {
+      return empty;
+    }
+  }
+
+  const amountTolerance = Decimal.max(1, total.times(0.005));
+  const reconciles = amountSum.minus(total).abs().lessThanOrEqualTo(amountTolerance) && percentSum.minus(100).abs().lessThanOrEqualTo(1);
+
+  return { reconciles, totalLabel: formatAedWhole(total.toDecimalPlaces(0).toFixed(0)) };
+}
+
 export function NewDealScreen() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { deals: dealsRepository } = useRepositories();
+  const { theme } = useTheme();
+  const { isRTL } = useI18nControls();
+  const styles = useThemedStyles(makeStyles);
   const aiSpaExtractionEnabled = useFeatureFlag("ai_spa_extraction");
   const [pendingSpaDocument, setPendingSpaDocument] = useState<PendingSpaDocument | null>(null);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
+
+  // Rebuilt when the language changes so validation errors localize.
+  const newDealFormSchema = useMemo(() => buildNewDealFormSchema(t), [t]);
 
   const form = useForm<NewDealFormValues>({
     resolver: zodResolver(newDealFormSchema),
@@ -59,6 +112,20 @@ export function NewDealScreen() {
     control,
     name: "milestones",
   });
+
+  // AI-extracted rows (money figures) need an explicit confirm tap before Save
+  // — trust-but-verify, matching the design system's SPA review flow. Keyed by
+  // the field-array's stable row id, not index, so it survives add/remove.
+  const [confirmedFieldIds, setConfirmedFieldIds] = useState<Set<string>>(new Set());
+  const unconfirmedAiFields = fields.filter((field) => field.source === "spa_extracted" && !confirmedFieldIds.has(field.id));
+
+  const watchedMilestones = useWatch({ control, name: "milestones" });
+  const watchedTotal = useWatch({ control, name: "totalValueAed" });
+  const reconciliation = useMemo(() => computeReconciliation(watchedTotal, watchedMilestones), [watchedTotal, watchedMilestones]);
+
+  function confirmMilestone(fieldId: string) {
+    setConfirmedFieldIds((current) => new Set(current).add(fieldId));
+  }
 
   useEffect(() => {
     startPerformanceJourney("new_deal_to_saved");
@@ -121,6 +188,13 @@ export function NewDealScreen() {
         return;
       }
 
+      // Reject oversized PDFs before upload/parse (server + bucket cap at 10 MB too).
+      const MAX_SPA_BYTES = 10 * 1024 * 1024;
+      if (typeof asset.size === "number" && asset.size > MAX_SPA_BYTES) {
+        setAiMessage(t("newDeal.fileTooLarge"));
+        return;
+      }
+
       extractSpaMutation.mutate({
         fileUri: asset.uri,
         fileName: asset.name || "SPA.pdf",
@@ -145,7 +219,7 @@ export function NewDealScreen() {
   const isExtracting = extractSpaMutation.isPending;
 
   return (
-    <Screen contentStyle={styles.screen}>
+    <Screen contentStyle={[styles.screen, isRTL && styles.rtl]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360 }}>
           <Button variant="text" size="md" label={t("newDeal.cancel")} accessibilityLabel={t("newDeal.cancelNewDeal")} onPress={() => router.back()} style={styles.cancel} />
@@ -160,12 +234,12 @@ export function NewDealScreen() {
               accessibilityLabel={t("newDeal.uploadSpaPdf")}
               disabled={isExtracting}
               haptic
-              focusRadius={16 + tokens.control.focusRingOffset}
-              pressScale={tokens.control.button.pressScale}
+              focusRadius={16 + 3}
+              pressScale={0.98}
               pressableStyle={styles.dropZone}
               onPress={pickSpaPdf}
             >
-              <FileUp size={24} color={tokens.colors.goldBright} strokeWidth={2.1} />
+              <FileUp size={24} color={theme.color.action} strokeWidth={2.1} />
               <Text variant="cardTitle" style={styles.dropTitle}>
                 {t("newDeal.dropSpaPdf")}
               </Text>
@@ -215,9 +289,18 @@ export function NewDealScreen() {
               label={t("newDeal.addMilestone")}
               accessibilityLabel={t("newDeal.addMilestone")}
               onPress={addMilestone}
-              leftIcon={<Plus size={15} color={tokens.colors.accent} strokeWidth={2.3} />}
+              leftIcon={<Plus size={15} color={theme.color.action} strokeWidth={2.3} />}
             />
           </View>
+
+          {reconciliation.reconciles ? (
+            <View style={styles.reconcileBanner}>
+              <CircleCheck size={17} color={theme.status.paid.text} strokeWidth={2} />
+              <Text variant="caption" style={styles.reconcileText}>
+                {t("newDeal.reconciled", { total: reconciliation.totalLabel })}
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.milestones}>
             {fields.map((field, index) => (
@@ -228,6 +311,10 @@ export function NewDealScreen() {
                 canRemove={fields.length > 1}
                 onRemove={() => remove(index)}
                 onTriggerTypeChange={(triggerType) => setValue(`milestones.${index}.triggerType`, triggerType, { shouldDirty: true, shouldValidate: true })}
+                requiresConfirm={field.source === "spa_extracted"}
+                confidence={field.confidence}
+                isConfirmed={confirmedFieldIds.has(field.id)}
+                onConfirm={() => confirmMilestone(field.id)}
               />
             ))}
           </View>
@@ -239,7 +326,12 @@ export function NewDealScreen() {
           </Text>
         ) : null}
 
-        <GoldButton label={isSaving ? t("newDeal.savingDeal") : t("newDeal.saveDeal")} disabled={isSaving || isExtracting} onPress={handleSubmit(saveDeal)} style={[styles.saveButton, (isSaving || isExtracting) && styles.disabled]} />
+        <GoldButton
+          label={isSaving ? t("newDeal.savingDeal") : unconfirmedAiFields.length > 0 ? t("newDeal.confirmToContinue", { done: fields.filter((f) => f.source === "spa_extracted").length - unconfirmedAiFields.length, total: fields.filter((f) => f.source === "spa_extracted").length }) : t("newDeal.saveDeal")}
+          disabled={isSaving || isExtracting || unconfirmedAiFields.length > 0}
+          onPress={handleSubmit(saveDeal)}
+          style={[styles.saveButton, (isSaving || isExtracting || unconfirmedAiFields.length > 0) && styles.disabled]}
+        />
       </ScrollView>
     </Screen>
   );
@@ -251,12 +343,36 @@ type MilestoneEditorProps = {
   canRemove: boolean;
   onRemove: () => void;
   onTriggerTypeChange: (triggerType: MilestoneTrigger) => void;
+  requiresConfirm: boolean;
+  confidence: MilestoneConfidence | undefined;
+  isConfirmed: boolean;
+  onConfirm: () => void;
 };
 
-function MilestoneEditor({ control, index, canRemove, onRemove, onTriggerTypeChange }: MilestoneEditorProps) {
+function MilestoneEditor({ control, index, canRemove, onRemove, onTriggerTypeChange, requiresConfirm, confidence, isConfirmed, onConfirm }: MilestoneEditorProps) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.milestoneCard}>
+    <View style={[styles.milestoneCard, requiresConfirm && !isConfirmed && styles.milestoneCardNeedsConfirm]}>
+      {requiresConfirm ? (
+        <View style={styles.confidenceRow}>
+          <Text variant="caption" style={[styles.confidenceBadge, confidence === "low" && styles.confidenceBadgeLow]}>
+            {t(confidence === "low" ? "newDeal.confidenceLow" : confidence === "medium" ? "newDeal.confidenceMedium" : "newDeal.confidenceHigh")}
+          </Text>
+          {isConfirmed ? (
+            <View style={styles.confirmedChip}>
+              <CircleCheck size={13} color={theme.status.paid.text} strokeWidth={2.2} />
+              <Text variant="caption" style={styles.confirmedChipText}>
+                {t("newDeal.confirmed")}
+              </Text>
+            </View>
+          ) : (
+            <Button variant="text" size="sm" label={t("newDeal.confirmFigures")} onPress={onConfirm} />
+          )}
+        </View>
+      ) : null}
+
       <View style={styles.milestoneTop}>
         <Controller
           control={control}
@@ -282,12 +398,12 @@ function MilestoneEditor({ control, index, canRemove, onRemove, onTriggerTypeCha
         <Controller
           control={control}
           name={`milestones.${index}.percent`}
-          render={({ field, fieldState }) => <Input label={t("newDeal.percent")} placeholder="20" keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
+          render={({ field, fieldState }) => <Input label={t("newDeal.percent")} placeholder={t("newDeal.percentPlaceholder")} keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
         />
         <Controller
           control={control}
           name={`milestones.${index}.amountAed`}
-          render={({ field, fieldState }) => <Input label={t("newDeal.amountAed")} placeholder="640,000" keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
+          render={({ field, fieldState }) => <Input label={t("newDeal.amountAed")} placeholder={t("newDeal.amountPlaceholder")} keyboardType="numeric" value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} style={styles.compactInput} />}
         />
       </View>
       <Controller
@@ -304,96 +420,144 @@ function MilestoneEditor({ control, index, canRemove, onRemove, onTriggerTypeCha
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    paddingBottom: 0,
-  },
-  scroll: {
-    paddingBottom: tokens.spacing[32],
-  },
-  cancel: {
-    alignSelf: "flex-start",
-    marginBottom: tokens.spacing[12],
-  },
-  title: {
-    marginBottom: tokens.spacing[16],
-  },
-  dropZone: {
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    borderColor: tokens.colors.goldHairline,
-    borderRadius: 16,
-    backgroundColor: tokens.colors.goldTint,
-    padding: tokens.spacing[22],
-    marginBottom: tokens.spacing[12],
-  },
-  dropTitle: {
-    fontSize: 16,
-    lineHeight: 20,
-    marginTop: tokens.spacing[8],
-  },
-  dropText: {
-    marginTop: tokens.spacing[4],
-    textAlign: "center",
-  },
-  aiMessage: {
-    color: tokens.colors.ok,
-    marginBottom: tokens.spacing[16],
-  },
-  planHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: tokens.spacing[12],
-    marginTop: tokens.spacing[8],
-    marginBottom: tokens.spacing[12],
-  },
-  planTitle: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  milestones: {
-    gap: tokens.spacing[8],
-  },
-  milestoneCard: {
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: 14,
-    backgroundColor: tokens.colors.panel,
-    padding: tokens.spacing[12],
-  },
-  milestoneTop: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: tokens.spacing[8],
-  },
-  milestoneGrid: {
-    flexDirection: "row",
-    gap: tokens.spacing[8],
-  },
-  compactInput: {
-    minHeight: 44,
-    paddingHorizontal: tokens.spacing[12],
-    fontSize: 13,
-  },
-  removeButton: {
-    marginTop: 22,
-  },
-  triggerRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: tokens.spacing[8],
-    marginBottom: tokens.spacing[12],
-  },
-  saveButton: {
-    marginTop: tokens.spacing[16],
-  },
-  errorText: {
-    color: tokens.colors.over,
-    marginTop: tokens.spacing[12],
-  },
-  disabled: {
-    opacity: 0.56,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    rtl: {
+      direction: "rtl",
+    },
+    screen: {
+      paddingBottom: 0,
+    },
+    scroll: {
+      paddingBottom: t.space[8],
+    },
+    cancel: {
+      alignSelf: "flex-start",
+      marginBottom: t.space[3],
+    },
+    title: {
+      marginBottom: t.space[4],
+    },
+    dropZone: {
+      alignItems: "center",
+      borderWidth: 1.5,
+      borderStyle: "dashed",
+      borderColor: t.color.action,
+      borderRadius: t.radius.lg,
+      backgroundColor: t.color.selectedTint,
+      padding: t.space[5],
+      marginBottom: t.space[3],
+    },
+    dropTitle: {
+      fontSize: 16,
+      lineHeight: 20,
+      marginTop: t.space[2],
+    },
+    dropText: {
+      marginTop: t.space[1],
+      textAlign: "center",
+    },
+    aiMessage: {
+      color: t.status.paid.text,
+      marginBottom: t.space[4],
+    },
+    planHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: t.space[3],
+      marginTop: t.space[2],
+      marginBottom: t.space[3],
+    },
+    planTitle: {
+      fontSize: 15,
+      lineHeight: 20,
+    },
+    reconcileBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: t.space[2],
+      borderWidth: 1,
+      borderColor: t.status.paid.solid,
+      borderRadius: t.radius.md,
+      backgroundColor: t.status.paid.bg,
+      padding: t.space[3],
+      marginBottom: t.space[3],
+    },
+    reconcileText: {
+      flex: 1,
+      color: t.status.paid.text,
+    },
+    milestones: {
+      gap: t.space[2],
+    },
+    milestoneCard: {
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.md,
+      backgroundColor: t.color.surfaceCard,
+      padding: t.space[3],
+    },
+    milestoneCardNeedsConfirm: {
+      borderColor: t.status.due.solid,
+    },
+    confidenceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: t.space[2],
+      marginBottom: t.space[2],
+    },
+    confidenceBadge: {
+      color: t.color.actionText,
+      fontFamily: t.typography.family.uiSemi,
+      fontSize: 11,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    confidenceBadgeLow: {
+      color: t.status.due.text,
+    },
+    confirmedChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    confirmedChipText: {
+      color: t.status.paid.text,
+      fontFamily: t.typography.family.monoSemi,
+    },
+    milestoneTop: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: t.space[2],
+    },
+    milestoneGrid: {
+      flexDirection: "row",
+      gap: t.space[2],
+    },
+    compactInput: {
+      minHeight: 44,
+      paddingHorizontal: t.space[3],
+      fontSize: 13,
+    },
+    removeButton: {
+      marginTop: 22,
+    },
+    triggerRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: t.space[2],
+      marginBottom: t.space[3],
+    },
+    saveButton: {
+      marginTop: t.space[4],
+    },
+    errorText: {
+      color: t.status.overdue.text,
+      marginTop: t.space[3],
+    },
+    disabled: {
+      opacity: 0.56,
+    },
+  });

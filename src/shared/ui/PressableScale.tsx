@@ -4,7 +4,12 @@ import { useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, type GestureResponderEvent, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
 
-import { tokens } from "@/shared/theme/tokens";
+import { useTheme } from "@/shared/theme/ThemeProvider";
+
+const PRESS_MS = 120;
+const FOCUS_OFFSET = 3;
+const FOCUS_WIDTH = 2;
+const DISABLED_OPACITY = 0.45;
 
 type PressableScaleProps = Omit<PressableProps, "children" | "style" | "disabled" | "onPress"> & {
   children: ReactNode;
@@ -40,6 +45,7 @@ export function PressableScale({
   onBlur,
   ...props
 }: PressableScaleProps) {
+  const { theme } = useTheme();
   const [focused, setFocused] = useState(false);
   const reducedMotion = useReducedMotion();
   const scale = useSharedValue(1);
@@ -56,8 +62,8 @@ export function PressableScale({
 
   function pressIn(event: GestureResponderEvent) {
     if (!blocked && !reducedMotion) {
-      scale.value = withTiming(pressScale, { duration: tokens.control.pressDurationMs });
-      overlay.value = withTiming(1, { duration: tokens.control.pressDurationMs });
+      scale.value = withTiming(pressScale, { duration: PRESS_MS });
+      overlay.value = withTiming(1, { duration: PRESS_MS });
     }
 
     onPressIn?.(event);
@@ -65,8 +71,8 @@ export function PressableScale({
 
   function pressOut(event: GestureResponderEvent) {
     if (!blocked && !reducedMotion) {
-      scale.value = withTiming(1, { duration: tokens.control.pressDurationMs });
-      overlay.value = withTiming(0, { duration: tokens.control.pressDurationMs });
+      scale.value = withTiming(1, { duration: PRESS_MS });
+      overlay.value = withTiming(0, { duration: PRESS_MS });
     }
 
     onPressOut?.(event);
@@ -86,7 +92,9 @@ export function PressableScale({
 
   return (
     <Animated.View style={[styles.wrap, blocked && styles.disabled, animatedStyle, outerStyle]}>
-      {focused ? <Animated.View pointerEvents="none" style={[styles.focusRing, { borderRadius: focusRadius }]} /> : null}
+      {focused ? (
+        <Animated.View pointerEvents="none" style={[styles.focusRing, { borderRadius: focusRadius, borderColor: theme.color.focusRing }]} />
+      ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ ...accessibilityState, busy, disabled: blocked, selected }}
@@ -118,15 +126,14 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   disabled: {
-    opacity: tokens.control.disabledOpacity,
+    opacity: DISABLED_OPACITY,
   },
   focusRing: {
     position: "absolute",
-    top: -tokens.control.focusRingOffset,
-    right: -tokens.control.focusRingOffset,
-    bottom: -tokens.control.focusRingOffset,
-    left: -tokens.control.focusRingOffset,
-    borderWidth: tokens.control.focusRingWidth,
-    borderColor: tokens.colors.accent,
+    top: -FOCUS_OFFSET,
+    right: -FOCUS_OFFSET,
+    bottom: -FOCUS_OFFSET,
+    left: -FOCUS_OFFSET,
+    borderWidth: FOCUS_WIDTH,
   },
 });

@@ -6,9 +6,22 @@ import "react-native-url-polyfill/auto";
 import {
   BricolageGrotesque_600SemiBold,
   BricolageGrotesque_700Bold,
+  BricolageGrotesque_800ExtraBold,
 } from "@expo-google-fonts/bricolage-grotesque";
+import {
+  HankenGrotesk_400Regular,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
+  HankenGrotesk_700Bold,
+} from "@expo-google-fonts/hanken-grotesk";
+import {
+  IBMPlexSansArabic_400Regular,
+  IBMPlexSansArabic_500Medium,
+  IBMPlexSansArabic_600SemiBold,
+  IBMPlexSansArabic_700Bold,
+} from "@expo-google-fonts/ibm-plex-sans-arabic";
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
-import { JetBrainsMono_400Regular, JetBrainsMono_600SemiBold } from "@expo-google-fonts/jetbrains-mono";
+import { JetBrainsMono_400Regular, JetBrainsMono_500Medium, JetBrainsMono_600SemiBold } from "@expo-google-fonts/jetbrains-mono";
 import { useFonts } from "expo-font";
 import { Stack, type ErrorBoundaryProps } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -51,10 +64,20 @@ function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     BricolageGrotesque_600SemiBold,
     BricolageGrotesque_700Bold,
+    BricolageGrotesque_800ExtraBold,
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
+    IBMPlexSansArabic_400Regular,
+    IBMPlexSansArabic_500Medium,
+    IBMPlexSansArabic_600SemiBold,
+    IBMPlexSansArabic_700Bold,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     JetBrainsMono_400Regular,
+    JetBrainsMono_500Medium,
     JetBrainsMono_600SemiBold,
   });
 

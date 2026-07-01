@@ -1,3 +1,4 @@
+import { t } from "i18next";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 import type { Database, MilestoneStatus, ProfileRow, ReminderChannel, ReminderStatus } from "../database.types";
@@ -27,9 +28,19 @@ export type PushTokenRegistration = {
   message: string;
 };
 
+// Whether the reminder dispatcher is actually running — the trust signal for
+// the app's core promise ("never miss a due date"). null lastRunAt means the
+// cron has never fired for this project (see docs/reminders-cron.md).
+export type DispatchHealth = {
+  lastRunAt: string | null;
+  lastRunOk: boolean;
+  isStale: boolean;
+};
+
 export type RemindersRepository = {
   listUpcomingReminders: () => Promise<ReminderItem[]>;
   registerPushToken: (token: string) => Promise<PushTokenRegistration>;
+  getDispatchHealth: () => Promise<DispatchHealth>;
 };
 
 type SupabaseDealRelation = { id: string; project_name: string; unit: string } | { id: string; project_name: string; unit: string }[] | null;
@@ -89,14 +100,17 @@ type PushTokenUpsertBuilder = {
   ) => Promise<{ error: PostgrestError | null }>;
 };
 
-type ReminderRpcClient = MeridianSupabaseClient & {
-  rpc: (
-    fn: "schedule_due_milestone_reminders",
-    args: Database["public"]["Functions"]["schedule_due_milestone_reminders"]["Args"],
-  ) => Promise<{ data: number | null; error: PostgrestError | null }>;
+type DispatchHealthRow = {
+  last_run_at: string | null;
+  last_run_ok: boolean;
+  minutes_since_last_run: number | null;
+  is_stale: boolean;
 };
 
-const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+type DispatchHealthRpcClient = {
+  rpc: (fn: "reminder_dispatch_health", args: Record<string, never>) => Promise<{ data: DispatchHealthRow[] | null; error: PostgrestError | null }>;
+};
+
 const reminderOffsets = [7, 3, 1] as const;
 
 const previewReminderSeeds = [
@@ -142,8 +156,9 @@ export class SupabaseRemindersRepository implements RemindersRepository {
   constructor(private readonly client: MeridianSupabaseClient) {}
 
   async listUpcomingReminders(): Promise<ReminderItem[]> {
-    await this.ensureReminderSchedule();
-
+    // Reminders are scheduled at deal-creation time (create_deal_with_plan), so
+    // this read path no longer re-runs the org-wide scheduler on every load —
+    // that unbounded re-scan was an application-layer DoS / cost vector.
     const reminders = this.client.from("reminders") as unknown as ReminderSelectBuilder;
     const { data, error } = await reminders
       .select("id, channel, send_at, sent_at, status, milestones(id, label, amount_aed, due_date, status, deals(id, project_name, unit))")
@@ -184,16 +199,8 @@ export class SupabaseRemindersRepository implements RemindersRepository {
 
     return {
       status: "registered",
-      message: "Push reminders are connected to this device.",
+      message: t("reminders.pushConnected"),
     };
-  }
-
-  private async ensureReminderSchedule() {
-    const { error } = await (this.client as ReminderRpcClient).rpc("schedule_due_milestone_reminders", {});
-
-    if (error) {
-      throw new Error(error.message);
-    }
   }
 
   private async getCurrentProfile(): Promise<ProfileRow> {
@@ -219,6 +226,29 @@ export class SupabaseRemindersRepository implements RemindersRepository {
 
     return data;
   }
+
+  async getDispatchHealth(): Promise<DispatchHealth> {
+    const rpcClient = this.client as unknown as DispatchHealthRpcClient;
+    const { data, error } = await rpcClient.rpc("reminder_dispatch_health", {});
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const row = (data ?? [])[0];
+
+    if (!row) {
+      // No dispatch has ever been logged for this project — the cron setup in
+      // docs/reminders-cron.md has not run yet. Surface as stale, not an error.
+      return { lastRunAt: null, lastRunOk: true, isStale: true };
+    }
+
+    return {
+      lastRunAt: row.last_run_at,
+      lastRunOk: row.last_run_ok,
+      isStale: row.is_stale,
+    };
+  }
 }
 
 export class PreviewRemindersRepository implements RemindersRepository {
@@ -236,6 +266,12 @@ export class PreviewRemindersRepository implements RemindersRepository {
       status: "registered",
       message: "Preview push reminders are enabled on this device.",
     };
+  }
+
+  async getDispatchHealth(): Promise<DispatchHealth> {
+    // No real dispatcher exists in preview mode — reporting healthy avoids a
+    // false "reminders may not be firing" warning while exploring the demo.
+    return { lastRunAt: null, lastRunOk: true, isStale: false };
   }
 }
 
@@ -353,7 +389,12 @@ function toReminderItem(input: {
 }
 
 function buildWhatsAppMessage(input: { dealLabel: string; milestoneLabel: string; amountLabel: string; dueDateLabel: string }) {
-  return `Payment reminder: AED ${input.amountLabel} for ${input.milestoneLabel} on ${input.dealLabel} is due ${input.dueDateLabel}.`;
+  return t("reminders.whatsappMessage", {
+    amount: input.amountLabel,
+    milestone: input.milestoneLabel,
+    deal: input.dealLabel,
+    dueDate: input.dueDateLabel,
+  });
 }
 
 function buildWhatsAppShareUrl(message: string) {
@@ -416,25 +457,25 @@ function formatAedWhole(value: string) {
 
 function formatDateLabel(dateValue: string | null) {
   if (!dateValue) {
-    return "TBD";
+    return t("deal.tbd");
   }
 
   const [, monthValue, dayValue] = dateValue.split("-");
   const month = Number(monthValue);
   const day = Number(dayValue);
 
-  if (!monthLabels[month - 1] || !day) {
+  if (!(month >= 1 && month <= 12) || !day) {
     return dateValue;
   }
 
-  return `${day} ${monthLabels[month - 1]}`;
+  return `${day} ${t(`deal.monthShort.${month}`)}`;
 }
 
 function formatSendAtLabel(sendAt: string) {
   const date = new Date(sendAt);
 
   if (Number.isNaN(date.getTime())) {
-    return "Queued";
+    return t("reminders.queued");
   }
 
   const now = Date.now();
@@ -442,18 +483,18 @@ function formatSendAtLabel(sendAt: string) {
   const diffDays = Math.ceil(diffMs / 86_400_000);
 
   if (diffMs <= 0) {
-    return "Ready now";
+    return t("reminders.readyNow");
   }
 
   if (diffDays <= 1) {
-    return "Tomorrow";
+    return t("reminders.tomorrow");
   }
 
   const matchingOffset = reminderOffsets.find((offset) => diffDays === offset);
 
   if (matchingOffset) {
-    return `${matchingOffset} days before`;
+    return t("reminders.daysBefore", { days: matchingOffset });
   }
 
-  return `${diffDays} days`;
+  return t("reminders.daysAway", { days: diffDays });
 }

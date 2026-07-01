@@ -2,7 +2,8 @@ import { createContext, type PropsWithChildren, useContext, useEffect, useMemo }
 import { StyleSheet, View } from "react-native";
 
 import { Sentry } from "@/shared/observability/sentry";
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useThemedStyles } from "@/shared/theme/ThemeProvider";
 import { Text } from "@/shared/ui/Text";
 
 import { evaluateSecurityPosture, type SecurityPosture } from "./securityPosture";
@@ -15,6 +16,7 @@ const SecurityContext = createContext<SecurityContextValue | null>(null);
 
 export function SecurityProvider({ children }: PropsWithChildren) {
   const posture = useMemo(() => evaluateSecurityPosture(), []);
+  const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
     Sentry.setContext("security_posture", {
@@ -63,22 +65,23 @@ export function useSecurityPosture() {
   return value.posture;
 }
 
-const styles = StyleSheet.create({
-  blocked: {
-    flex: 1,
-    justifyContent: "center",
-    padding: tokens.spacing[22],
-    backgroundColor: tokens.colors.bg,
-  },
-  panel: {
-    borderWidth: 1,
-    borderColor: tokens.colors.over,
-    borderRadius: tokens.radius.panel,
-    backgroundColor: tokens.colors.panel,
-    padding: tokens.spacing[22],
-  },
-  title: {
-    marginTop: tokens.spacing[8],
-    marginBottom: tokens.spacing[12],
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    blocked: {
+      flex: 1,
+      justifyContent: "center",
+      padding: t.space[5],
+      backgroundColor: t.color.bgApp,
+    },
+    panel: {
+      borderWidth: 1,
+      borderColor: t.status.overdue.solid,
+      borderRadius: t.radius.lg,
+      backgroundColor: t.color.surfaceCard,
+      padding: t.space[5],
+    },
+    title: {
+      marginTop: t.space[2],
+      marginBottom: t.space[3],
+    },
+  });

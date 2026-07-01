@@ -1,8 +1,8 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { Plus, type LucideIcon } from "lucide-react-native";
 import { StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 
 import { PressableScale } from "./PressableScale";
 
@@ -12,43 +12,45 @@ export type FabProps = Omit<PressableProps, "children" | "style"> & {
   style?: StyleProp<ViewStyle>;
 };
 
+// Solid jade (action) circle-square with the on-brand icon — the new system's
+// docked primary action.
 export function Fab({ icon: Icon = Plus, label = "Create", disabled, accessibilityLabel, style, ...props }: FabProps) {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <PressableScale
       {...props}
       accessibilityLabel={accessibilityLabel ?? label}
       disabled={Boolean(disabled)}
-      focusRadius={tokens.control.fab.radius + tokens.control.focusRingOffset}
+      focusRadius={21 + 3}
       haptic
       outerStyle={style}
-      pressOverlayColor={tokens.colors.goldBright}
-      pressScale={tokens.control.fab.pressScale}
+      pressOverlayColor={theme.color.actionPress}
+      pressScale={0.93}
       pressableStyle={styles.base}
     >
-      <LinearGradient colors={[tokens.colors.goldBright, tokens.colors.accent2]} start={{ x: 0.25, y: 0.07 }} end={{ x: 0.75, y: 0.93 }} style={StyleSheet.absoluteFill} />
       <View style={styles.iconWrap}>
-        <Icon size={tokens.control.fab.iconSize} color={tokens.colors.goldInk} strokeWidth={2.4} />
+        <Icon size={26} color={theme.color.textOnBrand} strokeWidth={2.4} />
       </View>
     </PressableScale>
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    width: tokens.control.fab.size,
-    height: tokens.control.fab.size,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    borderRadius: tokens.control.fab.radius,
-    shadowColor: tokens.colors.accent,
-    shadowOpacity: 0.4,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 14,
-  },
-  iconWrap: {
-    position: "relative",
-    zIndex: 1,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    base: {
+      width: 60,
+      height: 60,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+      borderRadius: 21,
+      backgroundColor: t.color.action,
+      ...t.elevation.md,
+    },
+    iconWrap: {
+      position: "relative",
+      zIndex: 1,
+    },
+  });

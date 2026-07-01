@@ -1,6 +1,7 @@
 import { ActivityIndicator, Platform, StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 
 import { PressableScale } from "./PressableScale";
 import { Text } from "./Text";
@@ -14,7 +15,14 @@ export type SocialButtonProps = Omit<PressableProps, "children" | "style"> & {
   style?: StyleProp<ViewStyle>;
 };
 
+const APPLE_BG = "#000000";
+const APPLE_TEXT = "#FFFFFF";
+const APPLE_BORDER = "#2C2C2E";
+const GOOGLE_BLUE = "#4285F4";
+
 export function SocialButton({ provider, label, loading = false, disabled, accessibilityLabel, style, ...props }: SocialButtonProps) {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const resolvedLabel = label ?? (provider === "apple" ? "Continue with Apple" : "Continue with Google");
   const isApple = provider === "apple";
 
@@ -24,13 +32,13 @@ export function SocialButton({ provider, label, loading = false, disabled, acces
       accessibilityLabel={accessibilityLabel ?? resolvedLabel}
       busy={loading}
       disabled={Boolean(disabled)}
-      focusRadius={tokens.control.socialButton.radius + tokens.control.focusRingOffset}
+      focusRadius={14 + 3}
       outerStyle={[styles.block, style]}
-      pressScale={tokens.control.socialButton.pressScale}
+      pressScale={0.97}
       pressableStyle={[styles.base, isApple ? styles.apple : styles.google]}
     >
       <View style={styles.content}>
-        {loading ? <ActivityIndicator color={isApple ? tokens.colors.authAppleText : tokens.colors.ink} size="small" /> : <SocialMark provider={provider} />}
+        {loading ? <ActivityIndicator color={isApple ? APPLE_TEXT : theme.color.textPrimary} size="small" /> : <SocialMark provider={provider} />}
         <Text variant="caption" style={[styles.label, isApple && styles.appleLabel]}>
           {loading ? "Connecting" : resolvedLabel}
         </Text>
@@ -40,6 +48,7 @@ export function SocialButton({ provider, label, loading = false, disabled, acces
 }
 
 function SocialMark({ provider }: { provider: SocialButtonProvider }) {
+  const styles = useThemedStyles(makeStyles);
   if (provider === "apple") {
     return (
       <Text variant="caption" style={styles.appleMark}>
@@ -57,61 +66,58 @@ function SocialMark({ provider }: { provider: SocialButtonProvider }) {
   );
 }
 
-const styles = StyleSheet.create({
-  block: {
-    width: "100%",
-  },
-  base: {
-    minHeight: tokens.control.socialButton.minHeight,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: tokens.control.socialButton.radius,
-    paddingHorizontal: tokens.control.socialButton.paddingHorizontal,
-    paddingVertical: tokens.control.socialButton.paddingVertical,
-  },
-  content: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: tokens.control.socialButton.gap,
-  },
-  apple: {
-    borderWidth: 1,
-    borderColor: tokens.colors.authAppleBorder,
-    backgroundColor: tokens.colors.authAppleBg,
-  },
-  google: {
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    backgroundColor: tokens.colors.panel,
-  },
-  label: {
-    color: tokens.colors.ink,
-    fontFamily: tokens.font.bodySemi,
-    fontSize: tokens.control.socialButton.fontSize,
-    lineHeight: tokens.control.socialButton.lineHeight,
-  },
-  appleLabel: {
-    color: tokens.colors.authAppleText,
-  },
-  appleMark: {
-    color: tokens.colors.authAppleText,
-    fontFamily: tokens.font.bodySemi,
-    fontSize: tokens.control.socialButton.fontSize,
-    lineHeight: tokens.control.socialButton.lineHeight,
-  },
-  googleMark: {
-    width: tokens.control.socialButton.markSize,
-    height: tokens.control.socialButton.markSize,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.panel2,
-  },
-  googleMarkText: {
-    color: tokens.colors.googleBlue,
-    fontFamily: tokens.font.bodySemi,
-    fontSize: tokens.control.button.sizes.sm.fontSize,
-    lineHeight: tokens.control.button.sizes.sm.lineHeight,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    block: { width: "100%" },
+    base: {
+      minHeight: 52,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: t.radius.md,
+      paddingHorizontal: 16,
+      paddingVertical: 15,
+    },
+    content: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+    },
+    apple: {
+      borderWidth: 1,
+      borderColor: APPLE_BORDER,
+      backgroundColor: APPLE_BG,
+    },
+    google: {
+      borderWidth: 1,
+      borderColor: t.color.borderStrong,
+      backgroundColor: t.color.surfaceCard,
+    },
+    label: {
+      color: t.color.textPrimary,
+      fontFamily: t.typography.family.uiSemi,
+      fontSize: 14.5,
+      lineHeight: 20,
+    },
+    appleLabel: { color: APPLE_TEXT },
+    appleMark: {
+      color: APPLE_TEXT,
+      fontFamily: t.typography.family.uiSemi,
+      fontSize: 14.5,
+      lineHeight: 20,
+    },
+    googleMark: {
+      width: 18,
+      height: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: t.radius.pill,
+      backgroundColor: t.color.surfaceSunk,
+    },
+    googleMarkText: {
+      color: GOOGLE_BLUE,
+      fontFamily: t.typography.family.uiSemi,
+      fontSize: 13,
+      lineHeight: 18,
+    },
+  });

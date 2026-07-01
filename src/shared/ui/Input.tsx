@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { StyleSheet, TextInput, type TextInputProps, View } from "react-native";
 
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
+
 import { Text } from "./Text";
 
 type InputProps = TextInputProps & {
@@ -10,16 +12,19 @@ type InputProps = TextInputProps & {
 };
 
 export function Input({ label, error, style, onFocus, onBlur, accessibilityLabel, ...props }: InputProps) {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [focused, setFocused] = useState(false);
 
   return (
     <View style={styles.field}>
-      <Text variant="caption" muted style={styles.label}>
+      <Text variant="caption" style={styles.label}>
         {label}
       </Text>
       <TextInput
         {...props}
-        accessibilityLabel={accessibilityLabel ?? label}
+        maxFontSizeMultiplier={theme.typography.maxFontScale}
+        accessibilityLabel={error ? `${accessibilityLabel ?? label}. ${error}` : accessibilityLabel ?? label}
         onFocus={(event) => {
           setFocused(true);
           onFocus?.(event);
@@ -28,11 +33,11 @@ export function Input({ label, error, style, onFocus, onBlur, accessibilityLabel
           setFocused(false);
           onBlur?.(event);
         }}
-        placeholderTextColor={tokens.colors.placeholder}
+        placeholderTextColor={theme.color.textTertiary}
         style={[styles.input, focused && styles.inputFocused, error && styles.inputError, style]}
       />
       {error ? (
-        <Text variant="caption" style={styles.error}>
+        <Text variant="caption" style={styles.error} accessibilityRole="alert" accessibilityLiveRegion="assertive">
           {error}
         </Text>
       ) : null}
@@ -40,32 +45,36 @@ export function Input({ label, error, style, onFocus, onBlur, accessibilityLabel
   );
 }
 
-const styles = StyleSheet.create({
-  field: {
-    gap: 7,
-    marginBottom: tokens.spacing[12],
-  },
-  label: {
-    fontSize: 12,
-  },
-  input: {
-    minHeight: 52,
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.field,
-    backgroundColor: tokens.colors.panel,
-    color: tokens.colors.ink,
-    fontFamily: tokens.font.bodyRegular,
-    fontSize: 15,
-    paddingHorizontal: tokens.spacing[16],
-  },
-  inputFocused: {
-    borderColor: tokens.colors.accent,
-  },
-  inputError: {
-    borderColor: tokens.colors.over,
-  },
-  error: {
-    color: tokens.colors.over,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    field: {
+      gap: 6,
+      marginBottom: t.space[3],
+    },
+    label: {
+      fontFamily: t.typography.family.uiMedium,
+      fontSize: 13,
+      color: t.color.textSecondary,
+    },
+    input: {
+      minHeight: t.sizing.ctrlMd,
+      borderWidth: 1.5,
+      borderColor: t.color.borderStrong,
+      borderRadius: t.radius.sm,
+      backgroundColor: t.color.surfaceCard,
+      color: t.color.textPrimary,
+      fontFamily: t.typography.family.ui,
+      fontSize: 16,
+      paddingHorizontal: 14,
+    },
+    inputFocused: {
+      borderColor: t.color.action,
+    },
+    inputError: {
+      borderColor: t.status.overdue.solid,
+    },
+    error: {
+      color: t.status.overdue.text,
+      fontSize: 12,
+    },
+  });

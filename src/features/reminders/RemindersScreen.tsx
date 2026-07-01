@@ -6,12 +6,13 @@ import { BellRing, MessageCircle, RefreshCw } from "lucide-react-native";
 import { MotiView } from "moti";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking, StyleSheet, View, type TextStyle, type ViewStyle } from "react-native";
+import { Linking, StyleSheet, View } from "react-native";
 
 import type { ReminderItem, ReminderUrgency } from "@/shared/data/repositories/remindersRepository";
 import { useRepositories } from "@/shared/data/RepositoryProvider";
 import { useFeatureFlag } from "@/shared/featureFlags/FeatureFlagProvider";
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useTheme, useThemedStyles } from "@/shared/theme/ThemeProvider";
 import { Button, GoldButton, GhostButton } from "@/shared/ui/Button";
 import { Screen } from "@/shared/ui/Screen";
 import { Text } from "@/shared/ui/Text";
@@ -20,16 +21,42 @@ import { registerForReminderPush } from "./notificationRegistration";
 
 const remindersQueryKey = ["reminders"] as const;
 
+type UrgencyColors = { nodeBorder: string; nodeBg: string; text: string };
+
+function urgencyColors(t: MeridianTheme, urgency: ReminderUrgency): UrgencyColors {
+  switch (urgency) {
+    case "ready":
+      return { nodeBorder: t.status.due.solid, nodeBg: t.status.due.solid, text: t.status.due.text };
+    case "overdue":
+      return { nodeBorder: t.status.overdue.solid, nodeBg: t.status.overdue.solid, text: t.status.overdue.text };
+    case "failed":
+      return { nodeBorder: t.status.overdue.solid, nodeBg: t.color.surfaceSunk, text: t.status.overdue.text };
+    case "sent":
+      return { nodeBorder: t.status.paid.solid, nodeBg: t.status.paid.solid, text: t.status.paid.text };
+    default:
+      return { nodeBorder: t.color.action, nodeBg: t.color.surfaceSunk, text: t.color.actionText };
+  }
+}
+
 export function RemindersScreen() {
   const { t } = useTranslation();
   const { reminders: remindersRepository } = useRepositories();
   const pushRemindersEnabled = useFeatureFlag("push_reminders");
   const whatsappRemindersEnabled = useFeatureFlag("whatsapp_reminders");
+  const styles = useThemedStyles(makeStyles);
   const [message, setMessage] = useState<string | null>(null);
 
   const remindersQuery = useQuery({
     queryKey: remindersQueryKey,
     queryFn: () => remindersRepository.listUpcomingReminders(),
+  });
+
+  // Whether the reminder dispatcher is actually running — a real trust signal
+  // for the app's core promise, not just "we scheduled a row and hoped".
+  const dispatchHealthQuery = useQuery({
+    queryKey: ["reminder-dispatch-health"],
+    queryFn: () => remindersRepository.getDispatchHealth(),
+    staleTime: 5 * 60_000,
   });
 
   const registerPushMutation = useMutation({
@@ -68,7 +95,7 @@ export function RemindersScreen() {
         <ReminderRow reminder={item} whatsappEnabled={whatsappRemindersEnabled} onShare={shareReminder} />
       </MotiView>
     ),
-    [shareReminder, whatsappRemindersEnabled],
+    [shareReminder, styles.reminderItem, whatsappRemindersEnabled],
   );
 
   return (
@@ -88,6 +115,7 @@ export function RemindersScreen() {
             isRegistering={registerPushMutation.isPending}
             isFetching={remindersQuery.isFetching}
             message={message}
+            dispatchStale={dispatchHealthQuery.data?.isStale ?? false}
             onRegisterPush={() => registerPushMutation.mutate()}
             onRefresh={() => void remindersQuery.refetch()}
           />
@@ -111,12 +139,14 @@ type ReminderListHeaderProps = {
   isRegistering: boolean;
   isFetching: boolean;
   message: string | null;
+  dispatchStale: boolean;
   onRegisterPush: () => void;
   onRefresh: () => void;
 };
 
-function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isRegistering, isFetching, message, onRegisterPush, onRefresh }: ReminderListHeaderProps) {
+function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isRegistering, isFetching, message, dispatchStale, onRegisterPush, onRefresh }: ReminderListHeaderProps) {
   const { t } = useTranslation();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View>
       <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360 }}>
@@ -128,6 +158,14 @@ function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isR
           {t("reminders.lede")}
         </Text>
       </MotiView>
+
+      {dispatchStale ? (
+        <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ type: "timing", duration: 240 }} style={styles.staleBanner}>
+          <Text variant="caption" style={styles.staleBannerText}>
+            {t("reminders.dispatchStale")}
+          </Text>
+        </MotiView>
+      ) : null}
 
       <MotiView from={{ opacity: 0, translateY: 18 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", duration: 360, delay: 80 }}>
         <View style={styles.summaryPanel}>
@@ -151,7 +189,7 @@ function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isR
         </View>
 
         <View style={styles.actions}>
-          {pushRemindersEnabled ? <GoldButton label={isRegistering ? t("reminders.connectingPush") : t("reminders.enablePushReminders")} disabled={isRegistering} onPress={onRegisterPush} style={isRegistering && styles.disabled} /> : null}
+          {pushRemindersEnabled ? <GoldButton label={isRegistering ? t("reminders.connectingPush") : t("reminders.enablePushReminders")} disabled={isRegistering} onPress={onRegisterPush} /> : null}
           <GhostButton label={isFetching ? t("reminders.refreshing") : t("reminders.refreshSchedule")} onPress={onRefresh} />
         </View>
 
@@ -167,10 +205,12 @@ function ReminderListHeader({ readyCount, failedCount, pushRemindersEnabled, isR
 
 function ReminderListEmpty({ isLoading, error, onRefresh }: { isLoading: boolean; error: Error | null; onRefresh: () => void }) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   if (isLoading) {
     return (
       <View style={styles.centerState}>
-        <RefreshCw size={18} color={tokens.colors.accent} strokeWidth={2.1} />
+        <RefreshCw size={18} color={theme.color.action} strokeWidth={2.1} />
         <Text variant="mono" muted>
           {t("reminders.loadingQueue")}
         </Text>
@@ -194,7 +234,7 @@ function ReminderListEmpty({ isLoading, error, onRefresh }: { isLoading: boolean
 
   return (
     <View style={styles.emptyState}>
-      <BellRing size={22} color={tokens.colors.accent} strokeWidth={2.1} />
+      <BellRing size={22} color={theme.color.action} strokeWidth={2.1} />
       <Text variant="cardTitle" style={styles.emptyTitle}>
         {t("reminders.emptyTitle")}
       </Text>
@@ -207,21 +247,23 @@ function ReminderListEmpty({ isLoading, error, onRefresh }: { isLoading: boolean
 
 function ReminderRow({ reminder, whatsappEnabled, onShare }: { reminder: ReminderItem; whatsappEnabled: boolean; onShare: (reminder: ReminderItem) => void }) {
   const { t } = useTranslation();
-  const urgencyStyle = urgencyStyles[reminder.urgency];
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const colors = urgencyColors(theme, reminder.urgency);
 
   return (
     <View style={styles.row}>
-      <View style={[styles.node, urgencyStyle.node]} />
+      <View style={[styles.node, { borderColor: colors.nodeBorder, backgroundColor: colors.nodeBg }]} />
       <View style={styles.copy}>
         <View style={styles.rowTop}>
-          <Text variant="cardTitle" style={styles.rowTitle}>
+          <Text variant="cardTitle" style={styles.rowTitle} numberOfLines={1}>
             {reminder.milestoneLabel}
           </Text>
-          <Text variant="mono" style={[styles.status, urgencyStyle.text]}>
+          <Text variant="mono" style={[styles.status, { color: colors.text }]}>
             {statusLabel(reminder, t)}
           </Text>
         </View>
-        <Text variant="caption" muted style={styles.dealLabel}>
+        <Text variant="caption" muted style={styles.dealLabel} numberOfLines={1}>
           {reminder.dealLabel}
         </Text>
         <View style={styles.metaRow}>
@@ -242,7 +284,7 @@ function ReminderRow({ reminder, whatsappEnabled, onShare }: { reminder: Reminde
             label={t("reminders.shareToWhatsapp")}
             accessibilityLabel={t("reminders.shareToWhatsappA11y", { milestone: reminder.milestoneLabel })}
             onPress={() => onShare(reminder)}
-            leftIcon={<MessageCircle size={15} color={tokens.colors.goldInk} strokeWidth={2.4} />}
+            leftIcon={<MessageCircle size={15} color={theme.color.textOnBrand} strokeWidth={2.4} />}
             style={styles.whatsappButton}
           />
         ) : null}
@@ -271,182 +313,145 @@ function statusLabel(reminder: ReminderItem, t: TFunction) {
   return reminder.sendAtLabel;
 }
 
-const urgencyStyles: Record<ReminderUrgency, { node: ViewStyle; text: TextStyle }> = {
-  ready: {
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    screen: {
+      paddingBottom: 0,
+    },
+    listContent: {
+      paddingBottom: t.sizing.tabBarClearance,
+    },
+    title: {
+      marginTop: t.space[2],
+      marginBottom: t.space[2],
+    },
+    lede: {
+      marginBottom: t.space[4],
+    },
+    staleBanner: {
+      borderWidth: 1,
+      borderColor: t.status.overdue.solid,
+      borderRadius: t.radius.md,
+      backgroundColor: t.status.overdue.bg,
+      padding: t.space[3],
+      marginBottom: t.space[3],
+    },
+    staleBannerText: {
+      color: t.status.overdue.text,
+    },
+    summaryPanel: {
+      minHeight: 92,
+      flexDirection: "row",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.lg,
+      backgroundColor: t.color.surfaceCard,
+      padding: t.space[4],
+      marginBottom: t.space[3],
+      ...t.elevation.sm,
+    },
+    summaryValue: {
+      fontSize: 28,
+      lineHeight: 32,
+      marginTop: t.space[1],
+    },
+    summaryDivider: {
+      width: 1,
+      height: 42,
+      backgroundColor: t.color.borderHair,
+      marginHorizontal: t.space[5],
+    },
+    actions: {
+      gap: t.space[2],
+      marginBottom: t.space[3],
+    },
+    message: {
+      color: t.color.accentText,
+      marginBottom: t.space[3],
+    },
+    reminderItem: {
+      marginBottom: t.space[3],
+    },
+    row: {
+      minHeight: 154,
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: t.space[3],
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.lg,
+      backgroundColor: t.color.surfaceCard,
+      padding: t.space[4],
+      ...t.elevation.sm,
+    },
     node: {
-      borderColor: tokens.colors.due,
-      backgroundColor: tokens.colors.due,
+      width: 13,
+      height: 13,
+      borderRadius: 5,
+      borderWidth: 2,
+      marginTop: 4,
     },
-    text: {
-      color: tokens.colors.due,
+    copy: {
+      flex: 1,
     },
-  },
-  scheduled: {
-    node: {
-      borderColor: tokens.colors.accent,
-      backgroundColor: tokens.colors.panel2,
+    rowTop: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: t.space[3],
     },
-    text: {
-      color: tokens.colors.accent,
+    rowTitle: {
+      flex: 1,
+      fontSize: 17,
+      lineHeight: 21,
     },
-  },
-  overdue: {
-    node: {
-      borderColor: tokens.colors.over,
-      backgroundColor: tokens.colors.over,
+    status: {
+      fontFamily: t.typography.family.monoSemi,
+      textAlign: "right",
     },
-    text: {
-      color: tokens.colors.over,
+    dealLabel: {
+      marginTop: t.space[1],
     },
-  },
-  failed: {
-    node: {
-      borderColor: tokens.colors.over,
-      backgroundColor: tokens.colors.panel2,
+    metaRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: t.space[3],
+      marginTop: t.space[3],
     },
-    text: {
-      color: tokens.colors.over,
+    whatsappButton: {
+      alignSelf: "flex-start",
+      marginTop: t.space[4],
     },
-  },
-  sent: {
-    node: {
-      borderColor: tokens.colors.ok,
-      backgroundColor: tokens.colors.ok,
+    centerState: {
+      minHeight: 160,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: t.space[2],
     },
-    text: {
-      color: tokens.colors.ok,
+    emptyState: {
+      minHeight: 210,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.lg,
+      backgroundColor: t.color.surfaceCard,
+      padding: t.space[5],
+      marginTop: t.space[2],
     },
-  },
-};
-
-const styles = StyleSheet.create({
-  screen: {
-    paddingBottom: 0,
-  },
-  listContent: {
-    paddingBottom: tokens.layout.appScreenBottomPadding,
-  },
-  title: {
-    marginTop: tokens.spacing[8],
-    marginBottom: tokens.spacing[8],
-  },
-  lede: {
-    marginBottom: tokens.spacing[16],
-  },
-  summaryPanel: {
-    minHeight: 92,
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.panel,
-    backgroundColor: tokens.colors.panel,
-    padding: tokens.spacing[16],
-    marginBottom: tokens.spacing[12],
-  },
-  summaryValue: {
-    fontSize: 28,
-    lineHeight: 32,
-    marginTop: tokens.spacing[4],
-  },
-  summaryDivider: {
-    width: 1,
-    height: 42,
-    backgroundColor: tokens.colors.line,
-    marginHorizontal: tokens.spacing[22],
-  },
-  actions: {
-    gap: tokens.spacing[8],
-    marginBottom: tokens.spacing[12],
-  },
-  message: {
-    color: tokens.colors.due,
-    marginBottom: tokens.spacing[12],
-  },
-  reminderItem: {
-    marginBottom: tokens.spacing[12],
-  },
-  row: {
-    minHeight: 154,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: tokens.spacing[12],
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.panel,
-    backgroundColor: tokens.colors.panel,
-    padding: tokens.spacing[16],
-  },
-  node: {
-    width: 13,
-    height: 13,
-    borderRadius: 5,
-    borderWidth: 2,
-    marginTop: 4,
-  },
-  copy: {
-    flex: 1,
-  },
-  rowTop: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: tokens.spacing[12],
-  },
-  rowTitle: {
-    flex: 1,
-    fontSize: 17,
-    lineHeight: 21,
-  },
-  status: {
-    fontFamily: tokens.font.monoSemi,
-    textAlign: "right",
-  },
-  dealLabel: {
-    marginTop: tokens.spacing[4],
-  },
-  metaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: tokens.spacing[12],
-    marginTop: tokens.spacing[12],
-  },
-  whatsappButton: {
-    alignSelf: "flex-start",
-    marginTop: tokens.spacing[16],
-  },
-  centerState: {
-    minHeight: 160,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: tokens.spacing[8],
-  },
-  emptyState: {
-    minHeight: 210,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.panel,
-    backgroundColor: tokens.colors.panel,
-    padding: tokens.spacing[22],
-    marginTop: tokens.spacing[8],
-  },
-  emptyTitle: {
-    fontSize: 22,
-    lineHeight: 27,
-    textAlign: "center",
-    marginTop: tokens.spacing[12],
-  },
-  emptyBody: {
-    textAlign: "center",
-    marginTop: tokens.spacing[8],
-    marginBottom: tokens.spacing[16],
-  },
-  failedText: {
-    color: tokens.colors.over,
-  },
-  disabled: {
-    opacity: 0.56,
-  },
-});
+    emptyTitle: {
+      fontSize: 22,
+      lineHeight: 27,
+      textAlign: "center",
+      marginTop: t.space[3],
+    },
+    emptyBody: {
+      textAlign: "center",
+      marginTop: t.space[2],
+      marginBottom: t.space[4],
+    },
+    failedText: {
+      color: t.status.overdue.text,
+    },
+  });

@@ -3,7 +3,15 @@ import { createContext, type PropsWithChildren, useCallback, useContext, useEffe
 
 import { useRepositories } from "@/shared/data/RepositoryProvider";
 import type { ProfileRow } from "@/shared/data/database.types";
-import type { SignInInput, SignUpWithWorkspaceInput, SignUpWithWorkspaceResult } from "@/shared/data/repositories/authRepository";
+import type {
+  CompleteTeamJoinInput,
+  CompleteWorkspaceProfileInput,
+  OrgInvite,
+  SignInInput,
+  SignUpAndJoinTeamInput,
+  SignUpWithWorkspaceInput,
+  SignUpWithWorkspaceResult,
+} from "@/shared/data/repositories/authRepository";
 
 type AuthContextValue = {
   session: Session | null;
@@ -13,6 +21,14 @@ type AuthContextValue = {
   refreshProfile: () => Promise<ProfileRow | null>;
   signIn: (input: SignInInput) => Promise<Session>;
   signUp: (input: SignUpWithWorkspaceInput) => Promise<SignUpWithWorkspaceResult>;
+  joinTeam: (input: SignUpAndJoinTeamInput) => Promise<SignUpWithWorkspaceResult>;
+  // Recovery path for a session left without a profile because the
+  // signUp/joinTeam profile RPC failed after auth.signUp() already
+  // persisted a session — completes profile setup WITHOUT calling
+  // auth.signUp() again (which is a dead end for an already-registered email).
+  completeWorkspaceProfile: (input: CompleteWorkspaceProfileInput) => Promise<ProfileRow>;
+  completeTeamJoin: (input: CompleteTeamJoinInput) => Promise<ProfileRow>;
+  createOrgInvite: () => Promise<OrgInvite>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 };
@@ -135,6 +151,51 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [auth],
   );
 
+  const joinTeam = useCallback(
+    async (input: SignUpAndJoinTeamInput) => {
+      setIsLoading(true);
+      try {
+        const result = await auth.signUpAndJoinTeam(input);
+        setSession(result.session);
+        setProfile(result.profile);
+        return result;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [auth],
+  );
+
+  const completeWorkspaceProfile = useCallback(
+    async (input: CompleteWorkspaceProfileInput) => {
+      setIsLoading(true);
+      try {
+        const nextProfile = await auth.completeWorkspaceProfile(input);
+        setProfile(nextProfile);
+        return nextProfile;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [auth],
+  );
+
+  const completeTeamJoin = useCallback(
+    async (input: CompleteTeamJoinInput) => {
+      setIsLoading(true);
+      try {
+        const nextProfile = await auth.completeTeamJoin(input);
+        setProfile(nextProfile);
+        return nextProfile;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [auth],
+  );
+
+  const createOrgInvite = useCallback(() => auth.createOrgInvite(), [auth]);
+
   const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -166,10 +227,28 @@ export function AuthProvider({ children }: PropsWithChildren) {
       refreshProfile,
       signIn,
       signUp,
+      joinTeam,
+      completeWorkspaceProfile,
+      completeTeamJoin,
+      createOrgInvite,
       signOut,
       deleteAccount,
     }),
-    [deleteAccount, isLoading, isSupabaseConfigured, profile, refreshProfile, session, signIn, signOut, signUp],
+    [
+      completeTeamJoin,
+      completeWorkspaceProfile,
+      createOrgInvite,
+      deleteAccount,
+      isLoading,
+      isSupabaseConfigured,
+      joinTeam,
+      profile,
+      refreshProfile,
+      session,
+      signIn,
+      signOut,
+      signUp,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

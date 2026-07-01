@@ -21,6 +21,9 @@ export default function LegalPage({
           <div className="eyebrow lime mono">Legal</div>
           <h1>{title}</h1>
           <p className="updated">Last updated {updated}</p>
+          <p className="updated" style={{ marginTop: "8px", fontStyle: "italic" }}>
+            Template — to be reviewed with a qualified lawyer before launch. This is not legal advice.
+          </p>
         </div>
       </section>
 

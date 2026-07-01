@@ -8,7 +8,8 @@ import { useAuth } from "@/features/auth";
 import { clearOnboardingStep, OnboardingStepView, TeachCard, useOnboardingStepTracking } from "@/features/onboarding";
 import { useRepositories } from "@/shared/data/RepositoryProvider";
 import { trackAnalyticsEvent } from "@/shared/observability/analytics";
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useThemedStyles } from "@/shared/theme/ThemeProvider";
 import { GoldButton, GhostButton } from "@/shared/ui/Button";
 import { ProgressDots } from "@/shared/ui/ProgressDots";
 import { Screen } from "@/shared/ui/Screen";
@@ -18,6 +19,7 @@ export default function EducationScreen() {
   const { t } = useTranslation();
   const { onboarding } = useRepositories();
   const { refreshProfile } = useAuth();
+  const styles = useThemedStyles(makeStyles);
   const [message, setMessage] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
   useOnboardingStepTracking("education", 5);
@@ -81,29 +83,30 @@ export default function EducationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    paddingBottom: tokens.spacing[32],
-  },
-  scrollContent: {
-    paddingBottom: tokens.spacing[32],
-  },
-  title: {
-    marginTop: tokens.spacing[8],
-    marginBottom: 20,
-  },
-  cards: {
-    marginBottom: tokens.spacing[12],
-  },
-  message: {
-    color: tokens.colors.due,
-    marginBottom: tokens.spacing[12],
-  },
-  actions: {
-    gap: tokens.spacing[12],
-    marginTop: tokens.spacing[22],
-  },
-  disabled: {
-    opacity: 0.52,
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    screen: {
+      paddingBottom: t.space[8],
+    },
+    scrollContent: {
+      paddingBottom: t.space[8],
+    },
+    title: {
+      marginTop: t.space[2],
+      marginBottom: 20,
+    },
+    cards: {
+      marginBottom: t.space[3],
+    },
+    message: {
+      color: t.color.accentText,
+      marginBottom: t.space[3],
+    },
+    actions: {
+      gap: t.space[3],
+      marginTop: t.space[5],
+    },
+    disabled: {
+      opacity: 0.52,
+    },
+  });

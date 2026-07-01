@@ -2,7 +2,20 @@
 
 > **Living document.** Current state of the Meridian app: what's built, how it works, what's deployed, and what's pending. Updated whenever something changes.
 >
-> **Last updated:** 2026-06-15 · **Repo:** https://github.com/Pratikkadam00/Meridian · **Commits:** 26
+> **Last updated:** 2026-06-26 · **Repo:** https://github.com/Pratikkadam00/Meridian
+
+---
+
+## Update — 2026-06-26 (read first; sections below predate this)
+
+Since the 2026-06-15 entry:
+- **Design system migrated** from "Midnight" (obsidian + champagne-gold) to the **Jade/Amber "Meridian"** system (light "warm paper" + dark "Midnight Meridian"), app-wide, with a user-facing Light/Dark/System toggle. Older sections below still describe the gold theme.
+- **Full i18n pass:** deal/reminder display strings, currency symbol, and form validation messages now localize EN/AR (parity enforced by test).
+- **Responsive + a11y hardening:** content capped/centred at `contentMax` for tablets, OS font-scale capped, `numberOfLines` on list/card text, AA-contrast text tokens, AT roles on nav/segmented/checkbox, the deal deck made screen-reader-accessible.
+- **Security hardening** from a whole-codebase audit — new migration `20260626090000_phase_15_security_hardening.sql` + edits to all 3 edge functions + client. Fixes: reminder write-amplification, rate-limiter fail-open + TOCTOU race, missing server-side plan reconciliation, file-size/MIME caps on `deal-documents`, weak password policy, app-lock fail-open + foreground re-lock, and the `delete-account` org-wipe. **NOT yet deployed (`db push` / `functions deploy`) or device-tested.**
+- **Migration count is now 7** on disk (the "migrations applied" note below is stale).
+
+**Honest current state (this supersedes the "~8.5–9/10 · verified against the live backend" line below):** the happy-path is fully built and passes client gates (tsc/lint/jest 31), but **end-to-end against the live backend has NOT been verified.** With no Supabase env vars the app runs entirely on in-memory Preview mocks; **reminders never fire until the `pg_cron`/`pg_net` setup in `docs/reminders-cron.md` is run** (there is no scheduler in-repo); `phase_15` is undeployed; and monetization is unbuilt. Realistic state: a polished, near-complete build pending **deploy + the reminder cron + on-device QA**, not a verified-live product.
 
 ---
 

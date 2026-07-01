@@ -9,7 +9,7 @@
     "scheme": "meridian",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
     "ios": {
@@ -19,7 +19,7 @@
     "android": {
       "package": "ae.meridian.broker",
       "adaptiveIcon": {
-        "backgroundColor": "#0e0f13",
+        "backgroundColor": "#0A2E2A",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -36,7 +36,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0e0f13",
+          "backgroundColor": "#0A2E2A",
           "image": "./assets/splash-icon.png",
           "imageWidth": 160
         }
@@ -46,7 +46,7 @@
       [
         "expo-notifications",
         {
-          "color": "#c8a96a"
+          "color": "#E0922F"
         }
       ],
       "@sentry/react-native"

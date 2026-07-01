@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/immutability */
 import { Link } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { MotiView } from "moti";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +8,8 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 
 import type { DashboardDeal } from "@/shared/data/repositories/dealsRepository";
-import { tokens } from "@/shared/theme/tokens";
+import type { MeridianTheme } from "@/shared/theme/meridian";
+import { useThemedStyles } from "@/shared/theme/ThemeProvider";
 import { GoldButton } from "@/shared/ui/Button";
 import { Text } from "@/shared/ui/Text";
 
@@ -28,6 +28,7 @@ const SWIPE_ADVANCE_THRESHOLD = 90;
 
 export function DealDeck({ deals, activeIndex, isLoading, isRTL, onActiveIndexChange, onDealPress }: DealDeckProps) {
   const { t } = useTranslation();
+  const styles = useThemedStyles(makeStyles);
   const translateX = useSharedValue(0);
   const reducedMotion = useReducedMotion();
   const activeDeal = deals[activeIndex];
@@ -57,7 +58,7 @@ export function DealDeck({ deals, activeIndex, isLoading, isRTL, onActiveIndexCh
             runOnJS(advanceDeck)();
           }
 
-          translateX.value = reducedMotion ? withTiming(0, { duration: 120 }) : withSpring(0, tokens.motion.spring);
+          translateX.value = reducedMotion ? withTiming(0, { duration: 120 }) : withSpring(0, { damping: 18, stiffness: 140 });
         }),
     [advanceDeck, reducedMotion, translateX],
   );
@@ -121,7 +122,23 @@ export function DealDeck({ deals, activeIndex, isLoading, isRTL, onActiveIndexCh
         {thirdDeal && deals.length > 2 ? <DeckShadowCard offset="far" /> : null}
         {nextDeal && deals.length > 1 ? <DeckShadowCard offset="near" /> : null}
         <GestureDetector gesture={gesture}>
-          <Animated.View style={[styles.frontCardShell, frontCardStyle]}>
+          <Animated.View
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={`${activeDeal.projectName}, ${activeDeal.developer}, ${activeDeal.dueInLabel}`}
+            accessibilityActions={deals.length > 1 ? [{ name: "increment", label: t("home.nextDeal") }] : undefined}
+            onAccessibilityTap={() => {
+              if (activeDealId) {
+                onDealPress(activeDealId);
+              }
+            }}
+            onAccessibilityAction={(event) => {
+              if (event.nativeEvent.actionName === "increment") {
+                advanceDeck();
+              }
+            }}
+            style={[styles.frontCardShell, frontCardStyle]}
+          >
             <DealCard deal={activeDeal} isRTL={isRTL} />
           </Animated.View>
         </GestureDetector>
@@ -132,26 +149,23 @@ export function DealDeck({ deals, activeIndex, isLoading, isRTL, onActiveIndexCh
 }
 
 function DeckShadowCard({ offset }: { offset: "near" | "far" }) {
+  const styles = useThemedStyles(makeStyles);
   return <View pointerEvents="none" style={[styles.shadowCard, offset === "near" ? styles.shadowCardNear : styles.shadowCardFar]} />;
 }
 
 function DealCard({ deal, isRTL }: { deal: DashboardDeal; isRTL: boolean }) {
   const { t } = useTranslation();
+  const styles = useThemedStyles(makeStyles);
 
   return (
-    <LinearGradient
-      colors={[tokens.colors.deck, tokens.colors.deckEnd]}
-      start={{ x: 0.37, y: 0.02 }}
-      end={{ x: 0.63, y: 0.98 }}
-      style={[styles.card, deal.status === "due" && styles.cardDue, deal.status === "over" && styles.cardOver, isRTL && styles.rtl]}
-    >
-      <Text variant="eyebrow">
+    <View style={[styles.card, deal.status === "due" && styles.cardDue, deal.status === "over" && styles.cardOver, isRTL && styles.rtl]}>
+      <Text variant="eyebrow" numberOfLines={1}>
         {deal.developer} - {deal.locationLabel}
       </Text>
-      <Text variant="cardTitle" style={styles.project}>
+      <Text variant="cardTitle" style={styles.project} numberOfLines={1}>
         {deal.projectName}
       </Text>
-      <Text variant="body" muted>
+      <Text variant="body" muted numberOfLines={1}>
         {deal.buyerName}
       </Text>
       <View style={styles.cardSpacer} />
@@ -173,11 +187,12 @@ function DealCard({ deal, isRTL }: { deal: DashboardDeal; isRTL: boolean }) {
           </Text>
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
 function DeckDots({ count, activeIndex }: { count: number; activeIndex: number }) {
+  const styles = useThemedStyles(makeStyles);
   if (count <= 1) {
     return <View style={styles.dotsSpacer} />;
   }
@@ -191,165 +206,163 @@ function DeckDots({ count, activeIndex }: { count: number; activeIndex: number }
   );
 }
 
-const styles = StyleSheet.create({
-  deckSlot: {
-    minHeight: 430,
-    justifyContent: "center",
-    marginBottom: tokens.spacing[16],
-  },
-  frontCardShell: {
-    minHeight: 410,
-  },
-  shadowCard: {
-    position: "absolute",
-    left: 18,
-    right: 18,
-    top: 26,
-    bottom: 10,
-    borderRadius: tokens.radius.deck,
-    backgroundColor: tokens.colors.panel,
-    opacity: 0.7,
-  },
-  shadowCardNear: {
-    transform: [{ scale: 0.94 }, { translateY: 2 }],
-  },
-  shadowCardFar: {
-    left: 34,
-    right: 34,
-    top: 44,
-    bottom: -2,
-    transform: [{ scale: 0.88 }, { translateY: 8 }],
-    opacity: 0.34,
-  },
-  card: {
-    minHeight: 410,
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.deck,
-    padding: 26,
-    shadowColor: tokens.colors.black,
-    shadowOpacity: 0.5,
-    shadowRadius: 30,
-    shadowOffset: { width: 0, height: 24 },
-    elevation: 12,
-  },
-  cardDue: {
-    borderColor: tokens.colors.goldHairline,
-    shadowColor: tokens.colors.accent,
-    shadowOpacity: 0.2,
-  },
-  cardOver: {
-    borderColor: tokens.colors.over,
-  },
-  rtl: {
-    direction: "rtl",
-  },
-  project: {
-    marginTop: 7,
-    marginBottom: tokens.spacing[4],
-  },
-  cardSpacer: {
-    flex: 1,
-    minHeight: 116,
-  },
-  progressTrack: {
-    height: 6,
-    overflow: "hidden",
-    borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.progressTrack,
-    marginTop: tokens.spacing[16],
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.accent,
-  },
-  cardFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: tokens.spacing[12],
-    marginTop: tokens.spacing[16],
-  },
-  chip: {
-    minHeight: 28,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.dueTint,
-    paddingHorizontal: tokens.spacing[12],
-    paddingVertical: tokens.spacing[4],
-  },
-  chipOk: {
-    backgroundColor: tokens.colors.okTint,
-  },
-  chipOver: {
-    backgroundColor: tokens.colors.overTint,
-  },
-  chipDot: {
-    width: 5,
-    height: 5,
-    borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.due,
-  },
-  chipDotOk: {
-    backgroundColor: tokens.colors.ok,
-  },
-  chipDotOver: {
-    backgroundColor: tokens.colors.over,
-  },
-  chipText: {
-    color: tokens.colors.due,
-  },
-  chipTextOk: {
-    color: tokens.colors.ok,
-  },
-  chipTextOver: {
-    color: tokens.colors.over,
-  },
-  dots: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 6,
-    marginBottom: tokens.spacing[4],
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: tokens.radius.pill,
-    backgroundColor: tokens.colors.progressTrack,
-  },
-  dotActive: {
-    width: 22,
-    backgroundColor: tokens.colors.accent,
-  },
-  dotsSpacer: {
-    height: 18,
-  },
-  loadingCard: {
-    minHeight: 410,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: tokens.colors.line,
-    borderRadius: tokens.radius.deck,
-    backgroundColor: tokens.colors.deck,
-  },
-  emptyCard: {
-    minHeight: 410,
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: tokens.colors.goldHairline,
-    borderRadius: tokens.radius.deck,
-    backgroundColor: tokens.colors.deck,
-    padding: tokens.spacing[22],
-  },
-  emptyTitle: {
-    marginTop: tokens.spacing[8],
-    marginBottom: tokens.spacing[12],
-  },
-  emptyBody: {
-    marginBottom: tokens.spacing[22],
-  },
-});
+const makeStyles = (t: MeridianTheme) =>
+  StyleSheet.create({
+    deckSlot: {
+      minHeight: 430,
+      justifyContent: "center",
+      marginBottom: t.space[4],
+    },
+    frontCardShell: {
+      minHeight: 410,
+    },
+    shadowCard: {
+      position: "absolute",
+      left: 18,
+      right: 18,
+      top: 26,
+      bottom: 10,
+      borderRadius: t.radius.xl,
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      backgroundColor: t.color.surfaceCard,
+      opacity: 0.6,
+    },
+    shadowCardNear: {
+      transform: [{ scale: 0.94 }, { translateY: 2 }],
+    },
+    shadowCardFar: {
+      left: 34,
+      right: 34,
+      top: 44,
+      bottom: -2,
+      transform: [{ scale: 0.88 }, { translateY: 8 }],
+      opacity: 0.34,
+    },
+    card: {
+      minHeight: 410,
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.xl,
+      backgroundColor: t.color.surfaceCard,
+      padding: 26,
+      ...t.elevation.md,
+    },
+    cardDue: {
+      borderColor: t.color.accent,
+    },
+    cardOver: {
+      borderColor: t.status.overdue.solid,
+    },
+    rtl: {
+      direction: "rtl",
+    },
+    project: {
+      marginTop: 7,
+      marginBottom: t.space[1],
+    },
+    cardSpacer: {
+      flex: 1,
+      minHeight: 116,
+    },
+    progressTrack: {
+      height: 6,
+      overflow: "hidden",
+      borderRadius: t.radius.pill,
+      backgroundColor: t.color.surfaceSunk,
+      marginTop: t.space[4],
+    },
+    progressFill: {
+      height: "100%",
+      borderRadius: t.radius.pill,
+      backgroundColor: t.color.action,
+    },
+    cardFooter: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: t.space[3],
+      marginTop: t.space[4],
+    },
+    chip: {
+      minHeight: 28,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      borderRadius: t.radius.pill,
+      backgroundColor: t.status.due.bg,
+      paddingHorizontal: t.space[3],
+      paddingVertical: t.space[1],
+    },
+    chipOk: {
+      backgroundColor: t.status.paid.bg,
+    },
+    chipOver: {
+      backgroundColor: t.status.overdue.bg,
+    },
+    chipDot: {
+      width: 5,
+      height: 5,
+      borderRadius: t.radius.pill,
+      backgroundColor: t.status.due.solid,
+    },
+    chipDotOk: {
+      backgroundColor: t.status.paid.solid,
+    },
+    chipDotOver: {
+      backgroundColor: t.status.overdue.solid,
+    },
+    chipText: {
+      color: t.status.due.text,
+    },
+    chipTextOk: {
+      color: t.status.paid.text,
+    },
+    chipTextOver: {
+      color: t.status.overdue.text,
+    },
+    dots: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 6,
+      marginBottom: t.space[1],
+    },
+    dot: {
+      width: 7,
+      height: 7,
+      borderRadius: t.radius.pill,
+      backgroundColor: t.color.borderStrong,
+    },
+    dotActive: {
+      width: 22,
+      backgroundColor: t.color.action,
+    },
+    dotsSpacer: {
+      height: 18,
+    },
+    loadingCard: {
+      minHeight: 410,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: t.color.borderHair,
+      borderRadius: t.radius.xl,
+      backgroundColor: t.color.surfaceCard,
+    },
+    emptyCard: {
+      minHeight: 410,
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: t.color.action,
+      borderRadius: t.radius.xl,
+      backgroundColor: t.color.surfaceCard,
+      padding: t.space[5],
+    },
+    emptyTitle: {
+      marginTop: t.space[2],
+      marginBottom: t.space[3],
+    },
+    emptyBody: {
+      marginBottom: t.space[5],
+    },
+  });
