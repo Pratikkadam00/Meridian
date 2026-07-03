@@ -64,6 +64,21 @@ export function buildNewDealFormSchema(t: TFunction) {
       milestones: z.array(milestoneSchema).min(1, t("validation.atLeastOneMilestone")),
     })
     .superRefine((values, ctx) => {
+      // `project` is a single free-text field split into projectName/unit on
+      // submit (splitProjectAndUnit) — the combined string is capped at 200
+      // here, but deals_unit_len caps the DERIVED unit at 120. An unusual
+      // project name (e.g. a long trailing "- ..." segment) could pass this
+      // 200 check yet still produce a >120-char unit and fail as a raw DB
+      // constraint error, so check the derived value too.
+      const { unit } = splitProjectAndUnit(values.project);
+      if (unit.length > 120) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["project"],
+          message: t("validation.tooLong"),
+        });
+      }
+
       // A payment plan that doesn't add up to the deal value is the exact error
       // this app exists to prevent. Validate the totals (skip if any field is
       // unparseable — those get their own field-level errors first).

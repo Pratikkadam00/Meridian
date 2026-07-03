@@ -41,6 +41,19 @@ describe("newDealFormSchema plan integrity", () => {
     }
   });
 
+  it("rejects a project name whose derived unit exceeds deals_unit_len (120 chars), even though the combined string is under 200", () => {
+    // "A - " (4 chars) + 130 chars = 134 total, well under the 200-char
+    // project field cap — but the derived unit alone is 130 chars, over the
+    // DB's deals_unit_len <= 120 constraint.
+    const longUnit = "x".repeat(130);
+    const result = newDealFormSchema.safeParse(values({ project: `A - ${longUnit}` }));
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.path.join(".") === "project")).toBe(true);
+    }
+  });
+
   it("rejects a plan whose percentages don't total 100", () => {
     const result = newDealFormSchema.safeParse(
       values({

@@ -80,7 +80,10 @@ export function DocumentVaultScreen({ dealId }: { dealId: string }) {
 
     try {
       const DocumentPicker = await import("expo-document-picker");
-      const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
+      // The deal-documents storage bucket is locked to application/pdf server-side
+      // (phase_15_security_hardening.sql, M7) — restrict the picker to match, so a
+      // broker never gets past file selection only to hit a raw storage error.
+      const result = await DocumentPicker.getDocumentAsync({ type: "application/pdf", copyToCacheDirectory: true });
 
       if (result.canceled) {
         setUploadingKind(null);
@@ -92,6 +95,15 @@ export function DocumentVaultScreen({ dealId }: { dealId: string }) {
       if (!asset?.uri) {
         setUploadingKind(null);
         setMessage(t("documents.couldNotReadFile"));
+        return;
+      }
+
+      // Defense in depth: some platforms/pickers don't perfectly honor the
+      // `type` filter above (e.g. a file with no extension or a mismatched
+      // mimeType), so re-check before ever hitting the network.
+      if (asset.mimeType && asset.mimeType !== "application/pdf") {
+        setUploadingKind(null);
+        setMessage(t("documents.pdfOnly"));
         return;
       }
 

@@ -79,6 +79,7 @@ export const resources = {
         "couldNotReadFile": "Could not read the selected file.",
         "fileTooLarge": "That file is too large (max 10 MB).",
         "couldNotOpenPicker": "Could not open the file picker.",
+        "pdfOnly": "Only PDF files are supported. Scan or export this document as a PDF first.",
         "untitled": "Untitled document",
         "previewViewUnavailable": "Viewing documents isn't available in preview mode."
       },
@@ -542,6 +543,7 @@ export const resources = {
         "couldNotReadFile": "تعذّر قراءة الملف المحدد.",
         "fileTooLarge": "هذا الملف كبير جدًا (الحد الأقصى 10 ميغابايت).",
         "couldNotOpenPicker": "تعذّر فتح أداة اختيار الملفات.",
+        "pdfOnly": "يتم دعم ملفات PDF فقط. امسح المستند ضوئيًا أو صدّره كملف PDF أولاً.",
         "untitled": "مستند بدون عنوان",
         "previewViewUnavailable": "عرض المستندات غير متاح في وضع المعاينة."
       },

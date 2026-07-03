@@ -45,7 +45,9 @@ const createSignUpSchema = (t: Translate) =>
   createSignInSchema(t).extend({
     password: signUpPasswordSchema(t),
     fullName: z.string().min(2, t("account.errorFullName")),
-    orgName: z.string().min(2, t("account.errorOrgName")),
+    // Matches orgs_name_len (<= 200 chars) so an over-long workspace name
+    // fails here rather than as a raw DB constraint error on signup.
+    orgName: z.string().min(2, t("account.errorOrgName")).max(200, t("validation.tooLong")),
   });
 
 // A separate signup path (not a post-hoc org switch) — joining an org is
@@ -63,7 +65,7 @@ const createJoinTeamSchema = (t: Translate) =>
 const createRecoverySchema = (t: Translate, mode: SignUpMode) =>
   z.object({
     fullName: z.string().min(2, t("account.errorFullName")),
-    orgName: mode === "create" ? z.string().min(2, t("account.errorOrgName")) : z.string().optional(),
+    orgName: mode === "create" ? z.string().min(2, t("account.errorOrgName")).max(200, t("validation.tooLong")) : z.string().optional(),
     inviteCode: mode === "join" ? z.string().trim().min(4, t("account.errorInviteCode")) : z.string().optional(),
   });
 

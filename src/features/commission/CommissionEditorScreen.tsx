@@ -164,6 +164,9 @@ function CommissionForm({ deal, dealId }: { deal: DealDetail; dealId: string }) 
                   label={t("commission.trancheLabel")}
                   placeholder={t("commission.trancheLabelPlaceholder")}
                   value={tranche.label}
+                  // Matches commission_tranches.label's length(label) <= 120
+                  // check — cap input here instead of failing on save.
+                  maxLength={120}
                   onChangeText={(value) => updateTranche(index, { label: value })}
                 />
               </View>
